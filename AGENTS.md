@@ -45,4 +45,9 @@ pnpm build:weapp   # 生产构建
 ## 分支模型
 
 沿用生态统一模型（ECO-ADR-0009）：`main` 开发 / `rak-stable` 发布；
-GitHub = 提交真源（VANexus org），GitLab 仅 CI/CD 端点，禁止提交。
+GitHub = 提交真源（**VANexus 团队仓**），GitLab 仅 CI/CD 端点，禁止提交。
+
+- **远程（团队仓）**：`https://github.com/VANexus/rak-control.git`（remote 名 `origin`）
+- **作者用户名**：保持 `Thecnfor`（与生态既有提交一致）；**禁止**改推到个人私有仓
+- **纪律**：后续开发步骤与 `docs/` 文档每次变更都必须 commit 并 push 到团队仓
+- 小程序 AppID：`wxa8bf102dcfdcec4c`（已写入 `project.config.json` 与 `.env.*`）
