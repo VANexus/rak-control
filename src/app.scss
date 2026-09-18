@@ -1,0 +1,15 @@
+@import "./styles/tokens.scss";
+@import "./styles/helpers.scss";
+@import "./styles/form.scss";
+@import "./styles/theme/taroify-overrides.scss";
+
+page {
+  background-color: #ffffff;
+  background-color: var(--color-background);
+  color: #0a0a0a;
+  color: var(--color-foreground);
+  font-family: var(--font-sans, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif);
+  font-size: 28rpx;
+  line-height: 1.5;
+  min-height: 100%;
+}

@@ -1,0 +1,26 @@
+.metric-card {
+  background: #ffffff;
+  background: var(--color-card);
+  border: var(--hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 28rpx 24rpx;
+  flex: 1 1 42%;
+  min-width: 280rpx;
+  box-sizing: border-box;
+}
+
+.metric-card__label {
+  color: var(--color-muted-foreground);
+  font-size: 22rpx;
+  margin-bottom: 12rpx;
+}
+
+.metric-card__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 40rpx;
+  font-weight: 600;
+  letter-spacing: -0.5rpx;
+  color: var(--color-foreground);
+  line-height: 1.2;
+}

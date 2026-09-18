@@ -1,0 +1,317 @@
+@import "./tokens.scss";
+
+/* Semantic utility classes (DESIGN.md) — no Tailwind */
+
+.page {
+  min-height: 100vh;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  padding: var(--space-page);
+  padding-bottom: calc(var(--space-page) + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.page--flush {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+}
+
+.surface-card {
+  background: var(--color-card);
+  border: var(--hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-card);
+}
+
+.surface-muted {
+  background: var(--color-muted);
+  border-radius: var(--radius-md);
+}
+
+.text-brand {
+  color: var(--color-brand);
+}
+
+.text-muted {
+  color: var(--color-muted-foreground);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-destructive {
+  color: var(--color-destructive);
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.text-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: -0.5rpx;
+  line-height: 1.3;
+}
+
+.text-card-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.text-body {
+  font-size: 28rpx;
+  font-weight: 400;
+}
+
+.text-caption {
+  font-size: 24rpx;
+  color: var(--color-muted-foreground);
+}
+
+.text-display {
+  font-size: 48rpx;
+  font-weight: 600;
+  letter-spacing: -1rpx;
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.5rpx;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.stack-gap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap);
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.row-between {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.row-gap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.hairline {
+  height: var(--hairline);
+  background: var(--color-border);
+  border: none;
+  margin: 24rpx 0;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--height-control);
+  min-height: 88rpx;
+  padding: 0 40rpx;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border-radius: var(--radius-md);
+  font-size: 28rpx;
+  font-weight: 500;
+  border: none;
+  transition: opacity var(--duration-fast) var(--ease-expo),
+    transform var(--duration-fast) var(--ease-expo);
+  box-sizing: border-box;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+.btn-primary--pressed {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+.btn-primary--disabled {
+  opacity: 0.4;
+}
+
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--height-control);
+  min-height: 88rpx;
+  padding: 0 40rpx;
+  background: var(--color-secondary);
+  color: var(--color-secondary-foreground);
+  border-radius: var(--radius-md);
+  font-size: 28rpx;
+  font-weight: 500;
+  border: var(--hairline) solid var(--color-border);
+  box-sizing: border-box;
+}
+
+.btn-secondary::after {
+  border: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 40rpx;
+  padding: 0 16rpx;
+  border-radius: var(--radius-full);
+  font-size: 20rpx;
+  font-weight: 500;
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
+  box-sizing: border-box;
+}
+
+.badge--brand {
+  background: rgba(94, 106, 210, 0.12);
+  color: var(--color-brand);
+}
+
+.badge--success {
+  background: rgba(0, 201, 132, 0.12);
+  color: var(--color-success);
+}
+
+.badge--warning {
+  background: rgba(230, 162, 60, 0.14);
+  color: var(--color-warning);
+}
+
+.badge--destructive {
+  background: rgba(229, 72, 77, 0.12);
+  color: var(--color-destructive);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 96rpx 48rpx;
+  gap: 16rpx;
+  text-align: center;
+}
+
+.section-label {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+  letter-spacing: 0.02em;
+  margin-bottom: 16rpx;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 96rpx;
+  padding: 20rpx 0;
+  border-bottom: var(--hairline) solid var(--color-border);
+  box-sizing: border-box;
+  transition: background-color var(--duration-fast) var(--ease-expo);
+}
+
+.list-row:last-child {
+  border-bottom: none;
+}
+
+.list-row--pressable:active {
+  background: var(--color-accent);
+}
+
+.metric-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-gap);
+}
+
+.metric-card {
+  flex: 1 1 45%;
+  min-width: 280rpx;
+  background: var(--color-card);
+  border: var(--hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 28rpx;
+  box-sizing: border-box;
+}
+
+.metric-card__label {
+  font-size: 24rpx;
+  color: var(--color-muted-foreground);
+  margin-bottom: 12rpx;
+}
+
+.metric-card__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: -0.5rpx;
+  color: var(--color-foreground);
+}
+
+.fade-in {
+  animation: rak-fade-in var(--duration-slow) var(--ease-expo) both;
+}
+
+@keyframes rak-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* WXSS 不支持通配选择器 `*`，用显式子节点 class 替代 */
+.stagger-in > .stagger-item {
+  animation: rak-fade-in var(--duration-base) var(--ease-expo) both;
+}
+
+.stagger-in > .stagger-item:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-in > .stagger-item:nth-child(2) {
+  animation-delay: 60ms;
+}
+.stagger-in > .stagger-item:nth-child(3) {
+  animation-delay: 120ms;
+}
+.stagger-in > .stagger-item:nth-child(4) {
+  animation-delay: 180ms;
+}
+.stagger-in > .stagger-item:nth-child(5) {
+  animation-delay: 240ms;
+}

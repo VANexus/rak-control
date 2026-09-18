@@ -1,0 +1,33 @@
+.home-hero {
+  padding: 36rpx 32rpx;
+}
+
+.home-hero__sub {
+  margin-top: 12rpx;
+}
+
+.task-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.task-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.task-card__title {
+  font-size: 30rpx;
+  line-height: 1.4;
+}
+
+.task-card__desc {
+  line-height: 1.5;
+}
+
+.task-card__action {
+  width: 100%;
+  min-height: 92rpx;
+}

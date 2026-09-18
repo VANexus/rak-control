@@ -1,0 +1,23 @@
+.join__input {
+  height: 88rpx;
+  padding: 0 24rpx;
+  background: var(--color-muted);
+  border: var(--hairline) solid var(--color-input);
+  border-radius: var(--radius-md);
+  color: var(--color-foreground);
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.join__textarea {
+  width: 100%;
+  min-height: 160rpx;
+  padding: 20rpx 24rpx;
+  background: var(--color-muted);
+  border: var(--hairline) solid var(--color-input);
+  border-radius: var(--radius-md);
+  color: var(--color-foreground);
+  font-size: 28rpx;
+  line-height: 1.5;
+  box-sizing: border-box;
+}

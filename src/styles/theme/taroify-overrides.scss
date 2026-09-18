@@ -1,0 +1,22 @@
+/* Map Taroify theme vars → Rak tokens (ADR-0002)
+ * 注意：WXSS 不支持 [class*=...] / 通配选择器，故此处不 import taroify 全量 CSS。
+ * 当前页面以 token 体系自绘为主；若日后引入 Taroify 组件，再按需 import 单组件样式并做兼容处理。
+ */
+
+page,
+.theme-dark {
+  --taroify-primary-color: var(--color-primary);
+  --taroify-primary-foreground: var(--color-primary-foreground);
+  --taroify-danger-color: var(--color-destructive);
+  --taroify-success-color: var(--color-success);
+  --taroify-warning-color: var(--color-warning);
+  --taroify-text-color: var(--color-foreground);
+  --taroify-text-color-2: var(--color-muted-foreground);
+  --taroify-text-color-3: var(--color-muted-foreground);
+  --taroify-active-color: var(--color-accent);
+  --taroify-background-color: var(--color-background);
+  --taroify-background-color-2: var(--color-muted);
+  --taroify-border-color: var(--color-border);
+  --taroify-active-opacity: 0.85;
+  --taroify-brand-color: var(--color-brand);
+}
