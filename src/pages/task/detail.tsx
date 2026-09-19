@@ -3,7 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, RoleBadge } from '@/components/ui'
+import { Card, HeroBlock, RoleBadge } from '@/components/ui'
 import { Skeleton } from '@/components/states'
 import { authStore, taskStore } from '@/store'
 import * as taskService from '@/services/task'
@@ -37,7 +37,7 @@ function TaskDetail() {
 
   if (loading || !task) {
     return (
-      <PageShell title='任务详情' showBack>
+      <PageShell title='任务详情' kicker='TASK DETAIL' headTitle='任务详情' showBack>
         <Skeleton rows={3} />
       </PageShell>
     )
@@ -114,20 +114,20 @@ function TaskDetail() {
   }
 
   return (
-    <PageShell title='任务详情' showBack>
+    <PageShell kicker='TASK DETAIL' headTitle='任务详情' showBack>
       <View className='stack-gap fade-in'>
-        <Card>
-          <Text className='text-title'>{task.title}</Text>
+        {/* hero 摘要：标题 + 分类/仓库/状态 */}
+        <HeroBlock variant='metric' title={task.title}>
           <View className='row-gap detail-tags'>
-            <View className='chip'>
+            <View className='chip chip--hero'>
               <Text>{TASK_CATEGORY_LABEL[task.category] || task.category}</Text>
             </View>
-            {task.repo ? <Text className='text-caption text-mono'>@{task.repo}</Text> : null}
-            <View key={task.status} className={`badge badge--${tone(task.status)} rise-in`}>
+            {task.repo ? <Text className='detail-tags__repo'>@{task.repo}</Text> : null}
+            <View key={task.status} className={`badge badge--hero rise-in`}>
               <Text>{TASK_STATUS_LABEL[task.status]}</Text>
             </View>
           </View>
-        </Card>
+        </HeroBlock>
 
         <Card>
           <Text className='section-label'>任务描述</Text>
@@ -239,23 +239,6 @@ function Timeline({ name, time, danger }: { name: string; time: string; danger?:
       </View>
     </View>
   )
-}
-
-function tone(status: Task['status']): string {
-  switch (status) {
-    case 'OPEN':
-    case 'SUBMITTED':
-      return 'brand'
-    case 'CLAIMED':
-      return 'warning'
-    case 'APPROVED':
-    case 'DONE':
-      return 'success'
-    case 'REJECTED':
-      return 'destructive'
-    default:
-      return ''
-  }
 }
 
 export default observer(TaskDetail)

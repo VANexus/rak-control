@@ -5,6 +5,25 @@
   flex-wrap: wrap;
 }
 
+/* hero 实底内的单色变体（走 currentColor，禁新 hex） */
+.chip--hero {
+  background: transparent;
+  border: var(--hairline) solid currentColor;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.badge--hero {
+  background: var(--color-on-accent);
+  color: var(--color-brand);
+}
+
+.detail-tags__repo {
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  opacity: 0.75;
+}
+
 .detail-block {
   margin-top: 16rpx;
   display: flex;

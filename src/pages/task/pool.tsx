@@ -3,7 +3,7 @@ import Taro, { useDidShow, usePullDownRefresh, useReachBottom } from '@tarojs/ta
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { TaskCard } from '@/components/ui'
+import { TaskCard, StatusPill } from '@/components/ui'
 import { ListState } from '@/components/states'
 import { authStore, taskStore } from '@/store'
 import { ROUTES } from '@/constants'
@@ -65,7 +65,11 @@ function TaskPool() {
   const onSearch = () => applyFilters(seg, category, kw.trim())
 
   return (
-    <PageShell title='任务池' subtitle={authStore.club?.name || ''}>
+    <PageShell
+      kicker='TASKS'
+      headTitle='任务池'
+      headStatus={<StatusPill dot={seg === 'open' && taskStore.total > 0} text={`在池 ${taskStore.total} 个`} />}
+    >
       {/* 分段器 */}
       <View className='pool-seg'>
         {SEGMENTS.map((s) => (
