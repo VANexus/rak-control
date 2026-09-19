@@ -22,6 +22,86 @@ export function SectionTitle({ children }: { children: ReactNode }) {
   )
 }
 
+/* ===== 杂志 Bento 模式（spec 2026-09-19 §2） ===== */
+
+/** 刊头：kicker 英文小标 + display 中文大标题 + 右侧状态胶囊 */
+export function MagHead({ kicker, title, status }: {
+  kicker: string
+  title: ReactNode
+  status?: ReactNode
+}) {
+  return (
+    <View className='mag-head'>
+      <View className='flex-1'>
+        <Text className='text-kicker'>{kicker}</Text>
+        <Text className='mag-head__title'>{title}</Text>
+      </View>
+      {status ? <View className='mag-head__status'>{status}</View> : null}
+    </View>
+  )
+}
+
+/** 刊头右侧状态胶囊（可带绿点） */
+export function StatusPill({ dot, text }: { dot?: boolean; text: string }) {
+  return (
+    <View className='status-pill'>
+      {dot ? <View className='status-pill__dot' /> : null}
+      <Text>{text}</Text>
+    </View>
+  )
+}
+
+/** 主角块：每屏 ≤1 的实底强调色块，action 装主操作 / metric 装 hero 数据 */
+export function HeroBlock({ variant = 'action', title, desc, onClick, children }: {
+  variant?: 'action' | 'metric'
+  title?: ReactNode
+  desc?: ReactNode
+  onClick?: () => void
+  children?: ReactNode
+}) {
+  return (
+    <View className={`hero-block hero-block--${variant}`} onClick={onClick}>
+      <View className='flex-1'>
+        {title ? <View className='hero-block__title'>{title}</View> : null}
+        {desc ? <View className='hero-block__desc'>{desc}</View> : null}
+        {children}
+      </View>
+      {variant === 'action' ? <Text className='hero-block__arrow'>›</Text> : null}
+    </View>
+  )
+}
+
+/** 2 列宫格容器 */
+export function TileGrid({ children }: { children: ReactNode }) {
+  return <View className='tile-grid stagger-in'>{children}</View>
+}
+
+/** 宫格入口：solid/white/paper 三种卡面，右上角圆形徽章 */
+export function Tile({ face = 'white', mark, title, desc, onClick, children }: {
+  face?: 'solid' | 'white' | 'paper'
+  mark?: 'arrow' | 'check' | null
+  title: ReactNode
+  desc?: ReactNode
+  onClick?: () => void
+  children?: ReactNode
+}) {
+  return (
+    <View
+      className={`tile tile--${face} tile--pressable stagger-item`}
+      onClick={onClick}
+    >
+      {mark ? (
+        <View className={`tile__mark tile__mark--${mark}`}>
+          <Text>{mark === 'check' ? '✓' : '›'}</Text>
+        </View>
+      ) : null}
+      {children}
+      <Text className='tile__title'>{title}</Text>
+      {desc ? <View className='tile__desc'>{desc}</View> : null}
+    </View>
+  )
+}
+
 export function EmptyState({
   title,
   description,

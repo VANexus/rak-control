@@ -1,9 +1,10 @@
 import { View } from '@tarojs/components'
 import type { ReactNode } from 'react'
-import { observer } from 'mobx-react-lite'
 import { useEffect } from 'react'
 import Taro from '@tarojs/taro'
+import { observer } from 'mobx-react-lite'
 import NavBar from '@/components/nav-bar'
+import { MagHead } from '@/components/ui'
 import { uiStore, authStore } from '@/store'
 import { canManage, isSuper } from '@/utils/permission'
 import { toast } from '@/utils/toast'
@@ -14,6 +15,10 @@ interface PageShellProps {
   title?: string
   showBack?: boolean
   subtitle?: string
+  /** 刊头三件套（bento 模式）：任一传入即启用，NavBar 标题让位 */
+  kicker?: string
+  headTitle?: ReactNode
+  headStatus?: ReactNode
   children: ReactNode
   requireRole?: 'manage' | 'super' | null
   bare?: boolean
@@ -23,6 +28,9 @@ function PageShell({
   title,
   showBack,
   subtitle,
+  kicker,
+  headTitle,
+  headStatus,
   children,
   requireRole = null,
   bare = false,
@@ -44,9 +52,11 @@ function PageShell({
     (requireRole === 'manage' && authStore.isLoggedIn && !canManage(role)) ||
     (requireRole === 'super' && authStore.isLoggedIn && !isSuper(role))
 
+  const useMagHead = kicker !== undefined || headTitle !== undefined || headStatus !== undefined
+
   return (
     <View className={`page-shell theme-${uiStore.theme}`}>
-      <NavBar title={title} showBack={showBack} subtitle={subtitle} />
+      <NavBar title={useMagHead ? '' : title} showBack={showBack} subtitle={subtitle} />
       <View className={bare ? 'page page--flush' : 'page'}>
         {blocked ? (
           <View className='empty-state'>
@@ -54,7 +64,12 @@ function PageShell({
             <View className='text-caption'>正在返回…</View>
           </View>
         ) : (
-          children
+          <>
+            {useMagHead ? (
+              <MagHead kicker={kicker ?? ''} title={headTitle ?? title ?? ''} status={headStatus} />
+            ) : null}
+            {children}
+          </>
         )}
       </View>
     </View>
