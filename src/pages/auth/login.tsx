@@ -77,8 +77,11 @@ function Login() {
   return (
     <View className={`login theme-${uiStore.theme}`}>
       <View className='login__brand'>
-        <View className='login__logo'>
-          <Text className='login__logo-text'>R</Text>
+        <View className='login__brand-row'>
+          <View className='login__logo'>
+            <Text className='login__logo-text'>R</Text>
+          </View>
+          <Text className='text-kicker'>RAK WORKSPACE</Text>
         </View>
         <Text className='login__name'>{APP_NAME}</Text>
         <Text className='login__slogan'>团队任务 · ROI · 一个小程序管好</Text>

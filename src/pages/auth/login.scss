@@ -2,44 +2,52 @@
 
 .login {
   min-height: 100vh;
-  background: var(--color-background);
+  background:
+    repeating-linear-gradient(0deg, var(--texture-line) 0 1px, transparent 1px var(--texture-cell)),
+    repeating-linear-gradient(90deg, var(--texture-line) 0 1px, transparent 1px var(--texture-cell)),
+    var(--color-background);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 128rpx var(--space-page) 48rpx;
+  padding: 96rpx var(--space-page) 48rpx;
   box-sizing: border-box;
 }
 
 .login__brand {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 12rpx;
-  margin-bottom: 64rpx;
+  margin-bottom: 56rpx;
+}
+
+.login__brand-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
 }
 
 .login__logo {
-  width: 112rpx;
-  height: 112rpx;
-  border-radius: 32rpx;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 24rpx;
   background: var(--color-logo);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-overlay);
 }
 
 .login__logo-text {
   color: #fff;
-  font-size: 56rpx;
+  font-size: 44rpx;
   font-weight: 800;
   line-height: 1;
 }
 
 .login__name {
-  font-size: 44rpx;
+  font-size: 72rpx;
   font-weight: 700;
-  letter-spacing: -1rpx;
+  letter-spacing: -2rpx;
+  line-height: 1.1;
   color: var(--color-foreground);
 }
 
@@ -52,7 +60,7 @@
   width: 100%;
   background: var(--color-card);
   border: var(--hairline) solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: 40rpx 32rpx;
   box-sizing: border-box;
   min-height: 420rpx;
@@ -199,11 +207,11 @@
 @keyframes pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(94, 106, 210, 0.35);
+    box-shadow: 0 0 0 0 var(--color-brand-soft);
   }
 
   50% {
-    box-shadow: 0 0 0 12rpx rgba(94, 106, 210, 0);
+    box-shadow: 0 0 0 12rpx transparent;
   }
 }
 

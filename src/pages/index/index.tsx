@@ -1,9 +1,9 @@
-import { View, Text, ScrollView } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, RoleBadge, TaskCard } from '@/components/ui'
+import { Card, HeroBlock, StatusPill, TaskCard, Tile, TileGrid } from '@/components/ui'
 import { Skeleton } from '@/components/states'
 import { authStore, taskStore } from '@/store'
 import * as taskService from '@/services/task'
@@ -74,23 +74,89 @@ function Home() {
   }
 
   return (
-    <PageShell title='Rak' subtitle={authStore.club?.name || ''}>
+    <PageShell
+      kicker='HOME'
+      headTitle={`${greeting()}，${authStore.user?.displayName || '成员'}`}
+      headStatus={
+        authStore.isManager && ready && data && data.reviewCount > 0 ? (
+          <StatusPill dot text={`${data.reviewCount} 个待验收`} />
+        ) : (
+          <StatusPill text={authStore.club?.name || 'Rak'} />
+        )
+      }
+    >
       {!ready || !data ? (
         <Skeleton rows={4} />
       ) : (
         <View className='stack-gap fade-in'>
-          {/* 问候 + 身份 */}
-          <View className='surface-card home-hello'>
-            <View className='flex-1'>
-              <Text className='text-title'>
-                {greeting()}，{authStore.user?.displayName || '成员'}
-              </Text>
-              <Text className='text-caption'>
-                {authStore.user?.duty || authStore.club?.name || ''}
+          {/* hero：本月 ROI 速览 */}
+          <HeroBlock
+            variant='metric'
+            onClick={() => Taro.switchTab({ url: ROUTES.roiOverview })}
+          >
+            <Text className='hero-block__desc'>本月净额（元）</Text>
+            <View className='home-hero-metrics'>
+              <Text className='text-display-mono'>¥{formatMoney2(data.roi?.net ?? 0)}</Text>
+              <Text
+                className={`home-hero-ratio ${
+                  data.roi?.roiRatio !== null && data.roi?.roiRatio !== undefined && data.roi.roiRatio >= 0
+                    ? 'text-success'
+                    : 'text-destructive'
+                }`}
+              >
+                ROI {formatRoiRatio(data.roi?.roiRatio ?? null)}
               </Text>
             </View>
-            <RoleBadge role={authStore.clubRole} />
-          </View>
+            {data.roi && data.roi.series.length > 0 ? (
+              <MiniBars series={data.roi.series} />
+            ) : null}
+          </HeroBlock>
+
+          {/* 宫格入口 */}
+          <TileGrid>
+            <Tile
+              face='solid'
+              mark='arrow'
+              title='任务池'
+              desc={`${data.openCount} 个任务在池可领`}
+              onClick={() => Taro.switchTab({ url: ROUTES.taskPool })}
+            />
+            {authStore.isManager ? (
+              <Tile
+                face='white'
+                mark={data.reviewCount > 0 ? 'check' : 'arrow'}
+                title='任务验收'
+                desc={data.reviewCount > 0 ? `${data.reviewCount} 个等待验收` : '暂无待验收'}
+                onClick={() => Taro.navigateTo({ url: ROUTES.adminReview })}
+              />
+            ) : (
+              <Tile
+                face='white'
+                mark='arrow'
+                title='公告'
+                desc='查看社团最新'
+                onClick={() => Taro.navigateTo({ url: ROUTES.announcements })}
+              />
+            )}
+            {authStore.isManager ? (
+              <>
+                <Tile
+                  face='white'
+                  mark='arrow'
+                  title='发布任务'
+                  desc='指派与奖励一并填'
+                  onClick={() => Taro.navigateTo({ url: ROUTES.adminTaskPublish })}
+                />
+                <Tile
+                  face='paper'
+                  mark='arrow'
+                  title='邀请码'
+                  desc='生成新成员入口'
+                  onClick={() => Taro.navigateTo({ url: ROUTES.adminInvites })}
+                />
+              </>
+            ) : null}
+          </TileGrid>
 
           {/* 我的进行中 */}
           <View>
@@ -124,62 +190,6 @@ function Home() {
               )}
             </Card>
           </View>
-
-          {/* 待验收（manager+） */}
-          {authStore.isManager ? (
-            <View
-              className='surface-card home-review-entry pressable'
-              onClick={() => Taro.navigateTo({ url: ROUTES.adminReview })}
-            >
-              <View className='flex-1'>
-                <Text className='text-card-title'>任务验收</Text>
-                <Text className='text-caption'>
-                  {data.reviewCount > 0 ? `${data.reviewCount} 个任务等待验收` : '暂无待验收'}
-                </Text>
-              </View>
-              {data.reviewCount > 0 ? (
-                <View className='home-badge-dot'>
-                  <Text>{data.reviewCount}</Text>
-                </View>
-              ) : (
-                <Text className='text-caption'>›</Text>
-              )}
-            </View>
-          ) : null}
-
-          {/* ROI 速览 */}
-          {data.roi ? (
-            <View
-              className='surface-card pressable'
-              onClick={() => Taro.switchTab({ url: ROUTES.roiOverview })}
-            >
-              <View className='row-between'>
-                <Text className='section-label'>本月 ROI</Text>
-                <Text className='text-caption'>看板 ›</Text>
-              </View>
-              <View className='row-between home-roi-metrics'>
-                <View>
-                  <Text className='text-caption'>净额（元）</Text>
-                  <Text className='metric-value'>
-                    ¥{formatMoney2(data.roi.net)}
-                  </Text>
-                </View>
-                <View className='home-roi-ratio'>
-                  <Text className='text-caption'>ROI</Text>
-                  <Text
-                    className={`metric-value ${
-                      data.roi.roiRatio !== null && data.roi.roiRatio >= 0
-                        ? 'text-success'
-                        : 'text-destructive'
-                    }`}
-                  >
-                    {formatRoiRatio(data.roi.roiRatio)}
-                  </Text>
-                </View>
-              </View>
-              {data.roi.series.length > 0 ? <MiniBars series={data.roi.series} /> : null}
-            </View>
-          ) : null}
 
           {/* 置顶/最新公告 */}
           <View>
@@ -221,43 +231,6 @@ function Home() {
               )}
             </Card>
           </View>
-
-          {/* 快捷动作（manager+） */}
-          {authStore.isManager ? (
-            <View className='home-actions'>
-              <View
-                className='home-actions__item pressable'
-                onClick={() => Taro.navigateTo({ url: ROUTES.adminTaskPublish })}
-              >
-                <Text>发布任务</Text>
-              </View>
-              <View
-                className='home-actions__item pressable'
-                onClick={() => Taro.navigateTo({ url: `${ROUTES.adminRoiEdit}?mode=create` })}
-              >
-                <Text>录入 ROI</Text>
-              </View>
-              <View
-                className='home-actions__item pressable'
-                onClick={() => Taro.navigateTo({ url: ROUTES.adminInvites })}
-              >
-                <Text>邀请码</Text>
-              </View>
-            </View>
-          ) : (
-            <View className='home-actions'>
-              <View
-                className='home-actions__item home-actions__item--wide pressable'
-                onClick={() => Taro.switchTab({ url: ROUTES.taskPool })}
-              >
-                <Text>去任务池领任务</Text>
-              </View>
-            </View>
-          )}
-
-          <Text className='text-caption home-foot'>
-            任务池 · 团队 · ROI —— 打开即用
-          </Text>
           {/* 借用 store 引用保证 observer 依赖刷新 */}
           {taskStore.total ? null : null}
         </View>

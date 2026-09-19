@@ -1,71 +1,44 @@
 /* 首页驾驶舱专属样式（其余全部走 helpers/tokens） */
 
-.home-hello {
+.home-hero-metrics {
   display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.home-review-entry {
-  display: flex;
-  align-items: center;
-}
-
-.home-badge-dot {
-  min-width: 44rpx;
-  height: 44rpx;
-  padding: 0 12rpx;
-  border-radius: var(--radius-full);
-  background: var(--color-destructive);
-  color: #fff;
-  font-size: 24rpx;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-.home-roi-metrics {
-  align-items: flex-end;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24rpx;
   margin-top: 8rpx;
 }
 
-.home-roi-ratio {
-  text-align: right;
+.home-hero-ratio {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 30rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* hero 实底内：柱图与文字改用 on-accent 单色（禁新 hex，走 currentColor） */
+.hero-block .bar-chart__bar {
+  background: currentColor;
+}
+
+.hero-block .bar-chart__bar--cost {
+  opacity: 0.35;
+}
+
+.hero-block .bar-chart__bar--rev {
+  opacity: 0.9;
+}
+
+.hero-block .bar-chart__label {
+  opacity: 0.6;
+}
+
+.hero-block .text-success,
+.hero-block .text-destructive {
+  color: inherit;
+  opacity: 0.9;
 }
 
 .home-empty-clickable {
   padding: 8rpx 0;
-}
-
-.home-actions {
-  display: flex;
-  gap: var(--space-gap);
-}
-
-.home-actions__item {
-  flex: 1;
-  height: var(--height-control);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-card);
-  border: var(--hairline) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  font-size: 26rpx;
-  font-weight: 600;
-  color: var(--color-foreground);
-}
-
-.home-actions__item--wide {
-  background: var(--color-primary);
-  color: var(--color-primary-foreground);
-  border-color: transparent;
-}
-
-.home-foot {
-  text-align: center;
-  display: block;
-  padding: 24rpx 0 calc(24rpx + env(safe-area-inset-bottom));
 }
