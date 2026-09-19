@@ -28,7 +28,7 @@ function AnnouncementDetail() {
   }, [id])
 
   return (
-    <PageShell title='公告详情' showBack>
+    <PageShell kicker='NOTICE' headTitle='公告详情' showBack>
       {loading ? (
         <Skeleton rows={2} />
       ) : item ? (

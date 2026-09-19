@@ -3,7 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { RoleBadge } from '@/components/ui'
+import { Card, RoleBadge, StatusPill, Tile, TileGrid } from '@/components/ui'
 import { authStore, taskStore, uiStore } from '@/store'
 import * as taskService from '@/services/task'
 import { ROUTES } from '@/constants'
@@ -38,76 +38,81 @@ function Profile() {
   const name = authStore.user?.displayName || '成员'
 
   return (
-    <PageShell title='我的' subtitle={authStore.club?.name || ''}>
+    <PageShell
+      kicker='ME'
+      headTitle={name}
+      headStatus={<RoleBadge role={authStore.clubRole} />}
+    >
       <View className='stack-gap fade-in'>
-        {/* 个人卡 */}
-        <View className='surface-card me-hero pressable' onClick={() => Taro.navigateTo({ url: ROUTES.myPerformance })}>
-          <View className='avatar-dot avatar-dot--lg'>
-            <Text>{name.slice(0, 1)}</Text>
-          </View>
-          <View className='flex-1'>
-            <View className='row-gap'>
-              <Text className='text-title'>{name}</Text>
-              <RoleBadge role={authStore.clubRole} />
+        {/* 身份信息卡 */}
+        <Card>
+          <View className='me-hero'>
+            <View className='avatar-dot avatar-dot--lg'>
+              <Text>{name.slice(0, 1)}</Text>
             </View>
-            <Text className='text-caption'>
-              {authStore.user?.duty || roleLabel(authStore.clubRole)}
-            </Text>
+            <View className='flex-1'>
+              <Text className='text-card-title'>
+                {authStore.user?.duty || roleLabel(authStore.clubRole)}
+              </Text>
+              <Text className='text-caption'>
+                {authStore.club?.name || ''}
+              </Text>
+            </View>
+            <StatusPill
+              text={myCount ? `进行中 ${myCount.active} · 待验收 ${myCount.review}` : '—'}
+            />
           </View>
-          <Text className='text-caption'>›</Text>
-        </View>
+        </Card>
 
-        {/* 任务速览 */}
-        <View className='me-counts'>
-          <View
-            className='me-counts__item pressable'
+        {/* 入口宫格 */}
+        <TileGrid>
+          <Tile
+            face='solid'
+            mark='arrow'
+            title='我的任务'
+            desc={myCount ? `${myCount.active} 个进行中` : '认领与交付记录'}
             onClick={() => Taro.navigateTo({ url: ROUTES.myTasks })}
-          >
-            <Text className='club-stats__num'>{myCount ? myCount.active : '—'}</Text>
-            <Text className='text-caption'>进行中</Text>
-          </View>
-          <View
-            className='me-counts__item pressable'
-            onClick={() => Taro.navigateTo({ url: `${ROUTES.myTasks}?seg=review` })}
-          >
-            <Text className='club-stats__num'>{myCount ? myCount.review : '—'}</Text>
-            <Text className='text-caption'>待验收</Text>
-          </View>
-          <View
-            className='me-counts__item pressable'
+          />
+          <Tile
+            face='white'
+            mark='arrow'
+            title='我的绩效'
+            desc='完成率 × 质量分'
             onClick={() => Taro.navigateTo({ url: ROUTES.myPerformance })}
-          >
-            <Text className='club-stats__num text-brand'>绩效</Text>
-            <Text className='text-caption'>我的考核</Text>
-          </View>
-        </View>
-
-        {/* 入口组 */}
-        <View className='surface-card'>
-          <MeRow title='我的任务' onClick={() => Taro.navigateTo({ url: ROUTES.myTasks })} />
-          <MeRow title='成员目录' onClick={() => Taro.navigateTo({ url: ROUTES.members })} />
+          />
           {canManage(authStore.clubRole) ? (
-            <MeRow
+            <Tile
+              face='white'
+              mark='arrow'
               title='管理面板'
-              hint='任务发布 · 验收 · ROI · 公告'
-              brand
+              desc='发布 · 验收 · ROI'
               onClick={() => Taro.navigateTo({ url: ROUTES.adminHome })}
             />
           ) : null}
           {isSuper(authStore.clubRole) ? (
-            <MeRow
+            <Tile
+              face='white'
+              mark='arrow'
               title='超级后台'
-              hint='任免 · 全量视图'
-              brand
+              desc='任免 · 全量视图'
               onClick={() => Taro.navigateTo({ url: ROUTES.superRoles })}
             />
           ) : null}
-          <MeRow
-            title={uiStore.theme === 'dark' ? '切换到浅色' : '切换到深色'}
-            onClick={() => uiStore.toggleTheme()}
+          <Tile
+            face='white'
+            mark='arrow'
+            title='成员目录'
+            desc='查看团队名册'
+            onClick={() => Taro.navigateTo({ url: ROUTES.members })}
           />
-          <MeRow title='设置' onClick={() => Taro.navigateTo({ url: ROUTES.settings })} />
-        </View>
+          <Tile
+            face='paper'
+            mark='arrow'
+            title='设置'
+            desc='主题与账号'
+            onClick={() => Taro.navigateTo({ url: ROUTES.settings })}
+          />
+        </TileGrid>
 
         <View
           className='btn-secondary pressable'
@@ -121,28 +126,6 @@ function Profile() {
         </View>
       </View>
     </PageShell>
-  )
-}
-
-function MeRow({
-  title,
-  hint,
-  brand,
-  onClick,
-}: {
-  title: string
-  hint?: string
-  brand?: boolean
-  onClick: () => void
-}) {
-  return (
-    <View className='list-row list-row--pressable' onClick={onClick}>
-      <View className='flex-1'>
-        <Text className={`text-card-title ${brand ? 'text-brand' : ''}`}>{title}</Text>
-        {hint ? <Text className='text-caption'>{hint}</Text> : null}
-      </View>
-      <Text className='text-caption'>›</Text>
-    </View>
   )
 }
 

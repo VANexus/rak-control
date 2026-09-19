@@ -7,7 +7,7 @@ import { toast } from '@/utils/toast'
 
 function Settings() {
   return (
-    <PageShell title='设置' showBack>
+    <PageShell kicker='SETTINGS' headTitle='设置' showBack>
       <Card className='stack-gap fade-in'>
         <View
           className='list-row list-row--pressable'

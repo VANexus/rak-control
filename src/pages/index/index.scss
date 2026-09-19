@@ -1,43 +1,4 @@
-/* 首页驾驶舱专属样式（其余全部走 helpers/tokens） */
-
-.home-hero-metrics {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 24rpx;
-  margin-top: 8rpx;
-}
-
-.home-hero-ratio {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 30rpx;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-/* hero 实底内：柱图与文字改用 on-accent 单色（禁新 hex，走 currentColor） */
-.hero-block .bar-chart__bar {
-  background: currentColor;
-}
-
-.hero-block .bar-chart__bar--cost {
-  opacity: 0.35;
-}
-
-.hero-block .bar-chart__bar--rev {
-  opacity: 0.9;
-}
-
-.hero-block .bar-chart__label {
-  opacity: 0.6;
-}
-
-.hero-block .text-success,
-.hero-block .text-destructive {
-  color: inherit;
-  opacity: 0.9;
-}
+/* 首页驾驶舱专属样式（hero 通用类已上收 ui.scss） */
 
 .home-empty-clickable {
   padding: 8rpx 0;

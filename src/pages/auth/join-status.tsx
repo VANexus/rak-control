@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import { ROUTES } from '@/constants'
+import { MagHead } from '@/components/ui'
 import { authStore, uiStore } from '@/store'
 import * as authService from '@/services/auth'
 import { ApiError } from '@/utils/request'
@@ -33,6 +34,7 @@ function JoinStatus() {
   return (
     <View className={`page-shell theme-${uiStore.theme}`}>
       <View className='page'>
+        <MagHead kicker='STATUS' title='加入进度' />
         <View className='stack-gap fade-in'>
           <View className='surface-card'>
             <Text className='section-label'>入队申请进度</Text>

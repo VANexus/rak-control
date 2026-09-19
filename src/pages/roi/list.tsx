@@ -53,7 +53,7 @@ function RoiList() {
   })
 
   return (
-    <PageShell title='ROI 项目' showBack>
+    <PageShell kicker='LEDGER' headTitle='ROI 项目' showBack>
       <View className='pool-seg'>
         {STATUS_FILTERS.map((f) => (
           <View

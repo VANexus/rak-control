@@ -3,7 +3,7 @@ import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { RoleBadge } from '@/components/ui'
+import { RoleBadge, StatusPill } from '@/components/ui'
 import { Skeleton } from '@/components/states'
 import { authStore, teamStore } from '@/store'
 import { formatDate } from '@/utils/format'
@@ -24,7 +24,7 @@ function Members() {
   const active = teamStore.members.filter((m) => m.status === 'ACTIVE')
 
   return (
-    <PageShell title='成员目录' showBack subtitle={`${active.length} 人`}>
+    <PageShell kicker='MEMBERS' headTitle='成员目录' showBack headStatus={<StatusPill text={`${active.length} 人`} />}>
       {loading ? (
         <Skeleton rows={4} />
       ) : (

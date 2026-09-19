@@ -30,7 +30,7 @@ function MyPerformance() {
   const ringPct = Math.min(100, score)
 
   return (
-    <PageShell title='我的绩效' showBack>
+    <PageShell kicker='PERFORMANCE' headTitle='我的绩效' showBack>
       {loading ? (
         <Skeleton rows={2} />
       ) : !perf || perf.claimedCount === 0 ? (

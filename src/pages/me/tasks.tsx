@@ -90,7 +90,7 @@ function MyTasks() {
   })
 
   return (
-    <PageShell title='我的任务' showBack>
+    <PageShell kicker='MY TASKS' headTitle='我的任务' showBack>
       <View className='pool-seg'>
         {SEGS.map((s) => (
           <View

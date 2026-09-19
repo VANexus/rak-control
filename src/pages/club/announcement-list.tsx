@@ -40,7 +40,7 @@ function AnnouncementList() {
   })
 
   return (
-    <PageShell title='公告' showBack>
+    <PageShell kicker='NOTICES' headTitle='公告' showBack>
       <ListState
         loading={loading && teamStore.announcements.length === 0}
         error={err}

@@ -25,7 +25,7 @@ function RoiDetail() {
 
   if (loading) {
     return (
-      <PageShell title='项目明细' showBack>
+      <PageShell kicker='ITEM' headTitle='项目明细' showBack>
         <Skeleton rows={2} />
       </PageShell>
     )
@@ -33,7 +33,7 @@ function RoiDetail() {
 
   if (!item) {
     return (
-      <PageShell title='项目明细' showBack>
+      <PageShell kicker='ITEM' headTitle='项目明细' showBack>
         <Text className='text-caption'>项目不存在或已删除</Text>
       </PageShell>
     )
@@ -43,7 +43,7 @@ function RoiDetail() {
   const costPct = total > 0 ? (item.cost / total) * 100 : 50
 
   return (
-    <PageShell title={item.title} showBack>
+    <PageShell kicker='ITEM' headTitle={item.title} showBack>
       <View className='stack-gap fade-in'>
         <View className='surface-card'>
           <Text className='section-label'>

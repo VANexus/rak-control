@@ -3,11 +3,11 @@ import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, RoleBadge } from '@/components/ui'
+import { Card, HeroBlock, RoleBadge, StatusPill, Tile, TileGrid } from '@/components/ui'
 import { Skeleton } from '@/components/states'
 import { authStore, roiStore, teamStore } from '@/store'
 import { ROUTES } from '@/constants'
-import { formatMoney2, formatRoiRatio } from '@/utils/format'
+import { formatRoiRatio } from '@/utils/format'
 import './club.scss'
 
 function ClubHome() {
@@ -39,55 +39,67 @@ function ClubHome() {
   const uid = authStore.user?.id
   const perfMap = new Map(teamStore.allPerformance.map((p) => [p.userId, p]))
   const topPerf = teamStore.allPerformance.slice(0, 5)
+  const activeCount = teamStore.members.filter((m) => m.status === 'ACTIVE').length
+  const latestAnn = teamStore.announcements.find((a) => a.pinned) || teamStore.announcements[0]
 
   return (
-    <PageShell title='团队' subtitle={authStore.club?.name || ''}>
+    <PageShell
+      kicker='CLUB'
+      headTitle={authStore.club?.name || 'Rak'}
+      headStatus={<StatusPill dot text={`在册 ${activeCount} 人`} />}
+    >
       {!ready ? (
         <Skeleton rows={3} />
       ) : (
         <View className='stack-gap fade-in'>
-          {/* 社团头卡 */}
-          <Card>
-            <Text className='text-title'>{authStore.club?.name || 'Rak'}</Text>
-            <Text className='text-caption mt-8'>
-              {authStore.club?.slug === 'flowmind' ? '任务与考核 · ' : ''}
-              在册 {teamStore.members.filter((m) => m.status === 'ACTIVE').length} 人
-            </Text>
-            <View className='club-stats'>
-              <View className='club-stats__item'>
-                <Text className='club-stats__num'>{teamStore.members.filter((m) => m.status === 'ACTIVE').length}</Text>
-                <Text className='text-caption'>成员</Text>
-              </View>
-              {authStore.isManager && roiStore.overview ? (
-                <View className='club-stats__item'>
-                  <Text className='club-stats__num text-success'>
-                    ¥{formatMoney2(roiStore.overview.net)}
-                  </Text>
-                  <Text className='text-caption'>本月净额</Text>
-                </View>
-              ) : null}
-              {authStore.isManager && roiStore.overview ? (
-                <View className='club-stats__item'>
-                  <Text className='club-stats__num text-brand'>
-                    {formatRoiRatio(roiStore.overview.roiRatio)}
-                  </Text>
-                  <Text className='text-caption'>本月 ROI</Text>
-                </View>
-              ) : null}
-            </View>
-          </Card>
+          {/* 最新/置顶公告 hero */}
+          {latestAnn ? (
+            <HeroBlock
+              title={latestAnn.title}
+              desc={`${latestAnn.authorName || ''} · ${latestAnn.publishedAt?.slice(0, 10) || ''}`}
+              onClick={() =>
+                Taro.navigateTo({ url: `${ROUTES.announcementDetail}?id=${latestAnn.id}` })
+              }
+            />
+          ) : null}
 
-          {/* 公告 */}
+          {/* 入口宫格 */}
+          <TileGrid>
+            <Tile
+              face='solid'
+              mark='arrow'
+              title='成员目录'
+              desc={`${activeCount} 人名册`}
+              onClick={() => Taro.navigateTo({ url: ROUTES.members })}
+            />
+            <Tile
+              face='white'
+              mark='arrow'
+              title='全部公告'
+              desc='查看历史通知'
+              onClick={() => Taro.navigateTo({ url: ROUTES.announcements })}
+            />
+            <Tile
+              face='white'
+              mark='arrow'
+              title='我的绩效'
+              desc='完成率 × 质量分'
+              onClick={() => Taro.navigateTo({ url: ROUTES.myPerformance })}
+            />
+            {authStore.isManager ? (
+              <Tile
+                face='paper'
+                mark='arrow'
+                title='本月经营'
+                desc={`ROI ${roiStore.overview ? formatRoiRatio(roiStore.overview.roiRatio) : '—'}`}
+                onClick={() => Taro.switchTab({ url: ROUTES.roiOverview })}
+              />
+            ) : null}
+          </TileGrid>
+
+          {/* 公告列表 */}
           <View>
-            <View className='row-between'>
-              <Text className='section-label'>公告</Text>
-              <Text
-                className='text-caption text-brand'
-                onClick={() => Taro.navigateTo({ url: ROUTES.announcements })}
-              >
-                全部 ›
-              </Text>
-            </View>
+            <Text className='section-label'>公告</Text>
             <Card>
               {teamStore.announcements.length === 0 ? (
                 <Text className='text-caption'>暂无公告</Text>
@@ -141,52 +153,23 @@ function ClubHome() {
               </Card>
             </View>
           ) : (
-            <Card
-              className='pressable'
-            >
-              <View
-                className='row-between'
-                onClick={() => Taro.navigateTo({ url: ROUTES.members })}
-              >
-                <View>
-                  <Text className='text-card-title'>成员目录</Text>
-                  <Text className='text-caption'>查看团队名册</Text>
-                </View>
-                <Text className='text-caption'>›</Text>
-              </View>
-            </Card>
-          )}
-
-          {/* 我的绩效（全员可见自己） */}
-          {uid ? (
-            <Card className='pressable' >
-              <View
-                className='row-between'
-                onClick={() => Taro.navigateTo({ url: ROUTES.myPerformance })}
-              >
-                <View>
-                  <Text className='text-card-title'>我的绩效</Text>
-                  <Text className='text-caption'>完成率 × 质量分</Text>
-                </View>
-                {authStore.isManager && perfMap.get(uid) ? (
+            perfMap.get(uid || '') ? (
+              <Card>
+                <View
+                  className='row-between'
+                  onClick={() => Taro.navigateTo({ url: ROUTES.myPerformance })}
+                >
+                  <View>
+                    <Text className='text-card-title'>我的绩效</Text>
+                    <Text className='text-caption'>完成率 × 质量分</Text>
+                  </View>
                   <Text className='metric-value text-brand'>
-                    {perfMap.get(uid)!.compositeScore}
+                    {perfMap.get(uid || '')!.compositeScore}
                   </Text>
-                ) : (
-                  <Text className='text-caption'>›</Text>
-                )}
-              </View>
-            </Card>
-          ) : null}
-
-          {authStore.isManager ? (
-            <View
-              className='btn-secondary pressable'
-              onClick={() => Taro.navigateTo({ url: ROUTES.members })}
-            >
-              <Text>成员管理入口</Text>
-            </View>
-          ) : null}
+                </View>
+              </Card>
+            ) : null
+          )}
         </View>
       )}
     </PageShell>

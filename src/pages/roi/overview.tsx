@@ -3,6 +3,7 @@ import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
+import { HeroBlock, StatusPill, Tile, TileGrid } from '@/components/ui'
 import { Skeleton } from '@/components/states'
 import { authStore, roiStore } from '@/store'
 import { ROUTES } from '@/constants'
@@ -36,17 +37,22 @@ function RoiOverviewPage() {
 
   const ov = roiStore.overview
   const max = ov ? Math.max(1, ...ov.series.flatMap((s) => [s.cost, s.revenue])) : 1
+  const periodLabel = PERIODS.find((p) => p.key === roiStore.period)?.label || '本月'
 
   if (!ready || !ov) {
     return (
-      <PageShell title='ROI'>
+      <PageShell kicker='ROI' headTitle='经营看板'>
         <Skeleton rows={3} />
       </PageShell>
     )
   }
 
   return (
-    <PageShell title='ROI 看板' subtitle={authStore.club?.name || ''}>
+    <PageShell
+      kicker='ROI'
+      headTitle='经营看板'
+      headStatus={<StatusPill dot text={periodLabel} />}
+    >
       <View className='stack-gap fade-in'>
         {/* 期间切换 */}
         <View className='roi-periods'>
@@ -61,7 +67,18 @@ function RoiOverviewPage() {
           ))}
         </View>
 
-        {/* 三指标 */}
+        {/* hero：净额 + ROI */}
+        <HeroBlock variant='metric'>
+          <Text className='hero-block__desc'>{periodLabel}净额（元）</Text>
+          <View className='home-hero-metrics'>
+            <Text className='text-display-mono'>¥{formatMoney2(ov.net)}</Text>
+            <Text className='home-hero-ratio'>
+              ROI {formatRoiRatio(ov.roiRatio)}
+            </Text>
+          </View>
+        </HeroBlock>
+
+        {/* 收支两指标 */}
         <View className='metric-grid'>
           <View className='metric-card'>
             <Text className='metric-card__label'>总收入</Text>
@@ -72,24 +89,6 @@ function RoiOverviewPage() {
           <View className='metric-card'>
             <Text className='metric-card__label'>总成本</Text>
             <Text className='metric-card__value'>¥{formatMoney2(ov.totalCost)}</Text>
-          </View>
-          <View className='metric-card'>
-            <Text className='metric-card__label'>净额</Text>
-            <Text
-              className={`metric-card__value ${ov.net >= 0 ? 'text-success' : 'text-destructive'}`}
-            >
-              ¥{formatMoney2(ov.net)}
-            </Text>
-          </View>
-          <View className='metric-card'>
-            <Text className='metric-card__label'>ROI</Text>
-            <Text
-              className={`metric-card__value ${
-                ov.roiRatio !== null && ov.roiRatio < 0 ? 'text-destructive' : 'text-brand'
-              }`}
-            >
-              {formatRoiRatio(ov.roiRatio)}
-            </Text>
           </View>
         </View>
 
@@ -125,21 +124,25 @@ function RoiOverviewPage() {
           </View>
         </View>
 
-        <View
-          className='btn-secondary pressable'
-          onClick={() => Taro.navigateTo({ url: ROUTES.roiList })}
-        >
-          <Text>查看全部项目明细</Text>
-        </View>
-
-        {authStore.isManager ? (
-          <View
-            className='btn-primary pressable'
-            onClick={() => Taro.navigateTo({ url: `${ROUTES.adminRoiEdit}?mode=create` })}
-          >
-            <Text>录入 ROI 项目</Text>
-          </View>
-        ) : null}
+        {/* 入口宫格 */}
+        <TileGrid>
+          <Tile
+            face='solid'
+            mark='arrow'
+            title='项目明细'
+            desc={`共 ${ov.itemCount} 项`}
+            onClick={() => Taro.navigateTo({ url: ROUTES.roiList })}
+          />
+          {authStore.isManager ? (
+            <Tile
+              face='white'
+              mark='arrow'
+              title='录入 ROI'
+              desc='新增收支项目'
+              onClick={() => Taro.navigateTo({ url: `${ROUTES.adminRoiEdit}?mode=create` })}
+            />
+          ) : null}
+        </TileGrid>
       </View>
     </PageShell>
   )
