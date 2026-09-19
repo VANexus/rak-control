@@ -1,9 +1,11 @@
 # rak-control 设计规范（DESIGN.md）
 
-> 产品对外名称：**Rak**（小程序）· brand 点缀默认 Linear 紫 `#5E6AD2`。
+> 产品对外名称：**Rak**（小程序）· brand 墨紫 `#4752A8`（light）/ Neon 青 `#22d3ee`（dark）。
 > 本文档是小程序 UI 实现的唯一视觉/交互契约。
-> 风格基准：**Linear / Vercel / Supabase / shadcn/ui** —— 克制中性色、低饱和、
-> 1px hairline 边框、内容优先、动效短而轻、**大厂完成度**（能用 ≠ 能合并）。
+> 风格基准：**Linear / Vercel / Supabase / shadcn/ui 的克制审美** + **杂志 Bento 布局体验**
+> （纸白底纹理、刊头排版、实底主角块、宫格入口；见
+> [specs/2026-09-19-rak-control-bento-redesign-design.md](./superpowers/specs/2026-09-19-rak-control-bento-redesign-design.md)）。
+> 层级靠构图与字重，不靠重阴影、不靠渐变。
 >
 > **生态定位（ECO-ADR-0007 / ECO-ADR-0014）**：
 > - design token 基准 = Xra-space `packages/ui/src/styles/tokens.css`
@@ -18,9 +20,12 @@
 
 ## 1. 设计原则
 
-1. **内容优先**：界面服务社团信息与 ROI 数据，装饰最小化；每屏一个主操作。
-2. **克制中性 + 单点强调**：约 90% 界面为中性灰阶；强调色只用于主按钮、选中态、关键状态。
-3. **Linear 式层级**：相邻面用「底色阶差 + 1px hairline」区分，不靠重阴影、不靠大面积渐变。
+1. **内容优先**：界面服务社团信息与 ROI 数据，装饰最小化；每屏一个**主角块**
+   （hero-block：一块实底强调色区域，装主操作 *或* hero 数据）。
+2. **克制中性 + 单点强调**：中性纸灰阶为主；强调色只用于主角块、主按钮、选中态、关键状态。
+   允许大面积品牌**实色块**作为布局元素；仍禁渐变、玻璃拟态、glow。
+3. **Linear 式层级 + 杂志式构图**：相邻面用「底色阶差 + 1px hairline + 低对比方格纹理」区分；
+   纹理对比度 ≤ 4%，定性为质感而非装饰。
 4. **Supabase / Vercel 式密度**：信息密度可控但呼吸感在；同层级控件高度、卡片内边距全站一致。
 5. **双主题等价**：本仓默认 **light**（校园移动场景），dark 作为完整第二主题同步维护，
    不是简单反色。与 rak 控制台 dark-first 的差异是**场景差异**，token 真源不变。
@@ -48,16 +53,21 @@ Token 定义只允许出现在 `src/styles/tokens.scss`；组件内**禁止**硬
 
 | Token | Light（默认） | Dark | 用途 |
 |---|---|---|---|
-| `--color-background` | `#FFFFFF` | `#0A0A0A` | 页面底 |
-| `--color-foreground` | `#0A0A0A` | `#FAFAFA` | 正文 |
-| `--color-card` | `#FFFFFF` | `#141414` | 卡片面 |
-| `--color-muted` | `#F5F5F5` | `#1F1F1F` | 次级底 / 输入底 |
-| `--color-muted-foreground` | `#737373` | `#A3A3A3` | 次级文字 |
-| `--color-border` | `rgba(0,0,0,0.08)` | `rgba(255,255,255,0.10)` | hairline |
-| `--color-input` | `rgba(0,0,0,0.12)` | `rgba(255,255,255,0.16)` | 输入边框 |
-| `--color-primary` | `#0A0A0A` | `#EDEDED` | 主按钮（Vercel 反色） |
+| `--color-background` | `#F4F3EE` 纸白 | `#101014` | 页面底（叠方格纹理） |
+| `--color-foreground` | `#1A1A22` | `#FAFAFA` | 正文（墨黑带蓝调） |
+| `--color-card` | `#FFFFFF` | `#17171C` | 卡片面 |
+| `--color-muted` | `#EFEEE7` | `#1F1F26` | 次级底 / 输入底 |
+| `--color-muted-foreground` | `#6B6B76` | `#A3A3AD` | 次级文字 |
+| `--color-border` | `rgba(26,26,34,0.08)` | `rgba(255,255,255,0.10)` | hairline |
+| `--color-input` | `rgba(26,26,34,0.14)` | `rgba(255,255,255,0.16)` | 输入边框 |
+| `--color-primary` | `#4752A8` | `#22D3EE` | 主按钮（实底强调色） |
 | `--color-primary-foreground` | `#FFFFFF` | `#0A0A0A` | 主按钮文字 |
-| `--color-brand` | `#5E6AD2` | `#5E6AD2` | 品牌点缀：logo、active、focus |
+| `--color-brand` | `#4752A8` 墨紫 | `#22D3EE` Neon 青 | 主角块/宫格实底/active/focus |
+| `--color-brand-pressed` | `#3A4490` | `#56DCEF` | 按压态 |
+| `--color-brand-soft` | `rgba(71,82,168,0.08)` | `rgba(34,211,238,0.12)` | 选中态浅底 |
+| `--color-on-accent` | `#FFFFFF` | `#0A0A0A` | 实底强调块上的文字 |
+| `--color-logo` | `#5E6AD2` | `#5E6AD2` | logo 专用 Linear 紫 |
+| `--texture-line` | `rgba(26,26,34,0.035)` | `rgba(255,255,255,0.04)` | 方格纹理线，格距 48rpx |
 | `--color-success` | `#00C984` | `#00E599` | 成功 / 健康 ROI |
 | `--color-warning` | `#E6A23C` | `#E6A23C` | 注意 / 告警（慎用第三色相） |
 | `--color-destructive` | `#E5484D` | `#FF6369` | 危险 / 删除 |
@@ -77,9 +87,10 @@ Token 定义只允许出现在 `src/styles/tokens.scss`；组件内**禁止**硬
 
 | 用途 | 字号 | 字重 | 备注 |
 |---|---|---|---|
-| 品牌 / 登录主标题 | 48rpx | 600 | `letter-spacing: -1rpx` |
-| 页面标题 | 36rpx | 600 | tracking-tight |
-| 卡片标题 | 28rpx | 500 | |
+| **kicker**（刊头英文小标） | 20rpx | 600 | 大写，`letter-spacing: 2rpx`，muted |
+| **display**（刊头主标、hero 数字） | 56–72rpx | 700 | 数字用等宽 tabular-nums |
+| 页面标题 | 40rpx | 700 | tracking-tight |
+| 卡片/宫格标题 | 32–34rpx | 600–700 | |
 | 正文 / 列表 | 28rpx | 400 | 默认密度 |
 | 次级说明 | 24rpx | 400 | `muted-foreground` |
 | 微型标注 | 20rpx | 400 | 坐标轴、角标 |
@@ -89,6 +100,12 @@ Token 定义只允许出现在 `src/styles/tokens.scss`；组件内**禁止**硬
 ## 3. 布局与间距
 
 - **网格**：间距一律 4 的倍数；RPX 换算 `px * 2`（如 8px → 16rpx）。
+- **背景纹理**：页面底与 paper 卡面叠方格线（`repeating-linear-gradient`，
+  线色 `--texture-line`，格距 `--texture-cell: 48rpx`）；纯 CSS，禁图片。
+- **布局模式库**（`src/components/ui.tsx`，页面只组合不发明）：
+  `MagHead` 刊头（kicker + display 标题 + 状态胶囊）、`HeroBlock` 主角块（每屏 ≤1）、
+  `TileGrid`/`Tile` 宫格入口（实底格每屏 ≤2）、`Card`+`list-row` 列表、
+  form-page/detail-page 骨架、空/错/载三态。
 - **页面边距**：左右 `32rpx`（16px）；列表卡片间距 `24rpx`。
 - **卡片内边距**：`32rpx`；卡内行距 `16–24rpx`。
 - **导航栏**：小程序原生导航优先 `custom`（自绘）以统一视觉；高度对齐微信胶囊，
@@ -104,7 +121,8 @@ Token 定义只允许出现在 `src/styles/tokens.scss`；组件内**禁止**硬
 |---|---|---|
 | `--radius-sm` | 8 | 小控件、输入框 |
 | `--radius-md` | 12 | 按钮、Badge |
-| `--radius-lg` | 20 | 卡片、弹层（对应基准 10px） |
+| `--radius-lg` | 28 | 卡片、宫格、弹层 |
+| `--radius-xl` | 40 | 主角块 hero-block |
 | `--radius-full` | 9999 | 胶囊、Avatar |
 
 - 边框：`1rpx solid var(--color-border)`（hairline）；阴影几乎不用。
@@ -176,7 +194,7 @@ Token 定义只允许出现在 `src/styles/tokens.scss`；组件内**禁止**硬
 1. **分包**：主包 ≤ 2MB；低频页面（管理、设置、说明）进分包。
 2. **图片**：远程 CDN + 压缩；列表缩略图 ≤ 300px；禁止未压缩原图进包。
 3. **滚动**：长列表用分页 + `ScrollView` 或虚拟列表库；禁止一次拉全量。
-4. **点击目标**：最小可点区域 ≥ 88rpx（44px）；主按钮高 ≥ 88rpx。
+4. **点击目标**：最小可点区域 ≥ 88rpx（44px）；主按钮高 ≥ 88rpx；宫格 tile 高 ≥ 300rpx。
 5. **导航深度**：页面栈 ≤ 5；深层改用 `redirectTo` / 分包页。
 6. **自定义导航栏**：统一高度与胶囊避让；页面标题不超过 20 字。
 7. **空/错/载三态**：每个列表与详情页必须齐全，缺一不许合并。
@@ -193,15 +211,15 @@ Token 定义只允许出现在 `src/styles/tokens.scss`；组件内**禁止**硬
 
 **Do**
 - 复用语义 token（`var(--color-muted)`），不写 hex 字面量（token 定义处除外）
-- 数字、时间、金额统一等宽风格与对齐
-- 主操作每屏仅一个；危险操作二次确认
-- 破坏性与不可逆操作前有明确文案说明后果
+- 数字、时间、金额统一等宽风格与对齐；hero 数据用 display 级大字
+- 每屏一个主角块、实底 tile ≤ 2；危险操作二次确认
+- 刊头三件套（kicker / display 标题 / 状态胶囊）逐屏齐全
 
 **Don't**
 - 不引入 Tailwind / shadcn / radix 进 weapp
-- 不用大面积渐变、玻璃拟态、霓虹 glow 做装饰
+- 不用渐变、玻璃拟态、霓虹 glow 做装饰（实色块与 ≤4% 方格纹理是布局/质感，允许）
 - 不手写已有组件库能力（Dialog/Toast/Picker…）
-- 不在组件里平行造一套颜色或圆角变量
+- 不在组件里平行造一套颜色或圆角变量；实底强调块上的文字用 `--color-on-accent`
 - 不只验 light 不验 dark；不只验有数据不验空态
 
 ---

@@ -18,7 +18,7 @@
 
 **Files:** Modify `src/styles/tokens.scss`
 
-- [ ] Step 1.1 light 块改值 + 新增 token：
+- [x] Step 1.1 light 块改值 + 新增 token：
 
 ```scss
 page {
@@ -57,7 +57,7 @@ page {
 }
 ```
 
-- [ ] Step 1.2 dark 块同步（保持 Neon 青，新增 on-accent/texture/pressed）：
+- [x] Step 1.2 dark 块同步（保持 Neon 青，新增 on-accent/texture/pressed）：
 
 ```scss
 page.theme-dark, .theme-dark {
@@ -87,13 +87,13 @@ page.theme-dark, .theme-dark {
 }
 ```
 
-- [ ] Step 1.3 `npx tsc --noEmit` 通过；commit `feat(tokens): 墨紫+纸白+方格纹理 token 换代`
+- [x] Step 1.3 `npx tsc --noEmit` 通过；commit `feat(tokens): 墨紫+纸白+方格纹理 token 换代`
 
 ### Task 2: helpers.scss 字体层级与纹理
 
 **Files:** Modify `src/styles/helpers.scss`、`src/components/page.scss`
 
-- [ ] Step 2.1 `.page` 背景叠方格纹理：
+- [x] Step 2.1 `.page` 背景叠方格纹理：
 
 ```scss
 .page {
@@ -109,7 +109,7 @@ page.theme-dark, .theme-dark {
 }
 ```
 
-- [ ] Step 2.2 文字类升级 + 新增 kicker/display：
+- [x] Step 2.2 文字类升级 + 新增 kicker/display：
 
 ```scss
 .text-title { font-size: 40rpx; font-weight: 700; letter-spacing: -1rpx; line-height: 1.3; }
@@ -125,13 +125,13 @@ page.theme-dark, .theme-dark {
 }
 ```
 
-- [ ] Step 2.3 `.badge--brand` 改 `background: var(--color-brand-soft); color: var(--color-brand);`；`.list-row` min-height 96→112rpx；`.page-shell` 删硬编码 hex 兜底行。commit `feat(styles): 字体层级 display 化 + 方格纹理底`
+- [x] Step 2.3 `.badge--brand` 改 `background: var(--color-brand-soft); color: var(--color-brand);`；`.list-row` min-height 96→112rpx；`.page-shell` 删硬编码 hex 兜底行。commit `feat(styles): 字体层级 display 化 + 方格纹理底`
 
 ### Task 3: 布局模式组件（ui.tsx / ui.scss）
 
 **Files:** Modify `src/components/ui.tsx`、`src/components/ui.scss`
 
-- [ ] Step 3.1 `ui.tsx` 新增 MagHead / StatusPill / HeroBlock / TileGrid / Tile 五组件（现有导出不动）：
+- [x] Step 3.1 `ui.tsx` 新增 MagHead / StatusPill / HeroBlock / TileGrid / Tile 五组件（现有导出不动）：
 
 ```tsx
 export function MagHead({ kicker, title, status }: {
@@ -196,7 +196,7 @@ export function Tile({ face = 'white', mark, title, desc, onClick, children }: {
 }
 ```
 
-- [ ] Step 3.2 `ui.scss` 追加模式样式（全文见下，全部吃 token）：
+- [x] Step 3.2 `ui.scss` 追加模式样式（全文见下，全部吃 token）：
 
 ```scss
 .mag-head { display: flex; align-items: flex-start; gap: 16rpx; margin-bottom: 32rpx; }
@@ -251,23 +251,23 @@ export function Tile({ face = 'white', mark, title, desc, onClick, children }: {
 .tile--solid .tile__mark--check { background: var(--color-on-accent); color: var(--color-brand); }
 ```
 
-- [ ] Step 3.3 `.metric-card__value` 字号 40→48rpx。commit `feat(ui): 刊头/hero/tile 布局模式组件`
+- [x] Step 3.3 `.metric-card__value` 字号 40→48rpx。commit `feat(ui): 刊头/hero/tile 布局模式组件`
 
 ### Task 4: PageShell 刊头 + NavBar 透明化
 
 **Files:** Modify `src/components/page-shell.tsx`、`src/components/nav-bar.tsx`、`src/components/nav-bar.scss`
 
-- [ ] Step 4.1 PageShell 新增 props `kicker?: string`、`headTitle?: ReactNode`、`headStatus?: ReactNode`；任一存在时渲染 `<MagHead kicker={kicker ?? ''} title={headTitle ?? title} status={headStatus} />` 于 children 前，且 NavBar `title` 传空串。
-- [ ] Step 4.2 `.nav-bar` 背景 `transparent`、去底边线，仅留返回‹与主题切换。commit `feat(shell): PageShell 刊头模式 + 透明导航`
+- [x] Step 4.1 PageShell 新增 props `kicker?: string`、`headTitle?: ReactNode`、`headStatus?: ReactNode`；任一存在时渲染 `<MagHead kicker={kicker ?? ''} title={headTitle ?? title} status={headStatus} />` 于 children 前，且 NavBar `title` 传空串。
+- [x] Step 4.2 `.nav-bar` 背景 `transparent`、去底边线，仅留返回‹与主题切换。commit `feat(shell): PageShell 刊头模式 + 透明导航`
 
 ### Task 5: tabBar 与 Taroify 色值同步
 
 **Files:** Modify `src/app.config.ts`、`src/styles/theme/taroify-overrides.scss`、`src/assets/tabbar/*-active.png`
 
-- [ ] Step 5.1 app.config：`selectedColor '#4752A8'`、`color '#6B6B76'`、`window` 两处背景 `'#F4F3EE'`。
-- [ ] Step 5.2 读 `scripts/gen-tabbar-icons.py`，active 色参数改 `#4752A8` 后重跑生成图标。
-- [ ] Step 5.3 taroify-overrides 中 `#5e6ad2` → `#4752a8`。
-- [ ] Step 5.4 `pnpm build:weapp` 通过。commit `feat(tabbar): 墨紫选中态与主题色同步`
+- [x] Step 5.1 app.config：`selectedColor '#4752A8'`、`color '#6B6B76'`、`window` 两处背景 `'#F4F3EE'`。
+- [x] Step 5.2 读 `scripts/gen-tabbar-icons.py`，active 色参数改 `#4752A8` 后重跑生成图标。
+- [x] Step 5.3 taroify-overrides 中 `#5e6ad2` → `#4752a8`。
+- [x] Step 5.4 `pnpm build:weapp` 通过。commit `feat(tabbar): 墨紫选中态与主题色同步`
 
 ---
 
@@ -317,8 +317,8 @@ review/members/invites/join-requests：刊头（`REVIEW`/`ROSTER`/`INVITES`/`REQ
 §2.2 色彩表、§2.3 字体表、§4 圆角表按 spec §1 更新；§1 原则补「主角块」定义；§3 增纹理条目；§8 Don't 改为「禁渐变/玻璃拟态/glow，允许品牌实底块与 ≤4% 方格纹理」；§7 主操作原则 → 「每屏一个主角块」。
 
 ### Task 17: 终验
-- [ ] `pnpm build:weapp` + `npx tsc --noEmit` 零错误
-- [ ] 页面目录 grep 无新增 hex 字面量（tokens/overrides 除外）
-- [ ] 每屏 ≤1 hero、≤2 实底 tile、刊头三件套齐全
-- [ ] light/dark 逐 Tab 目视（微信开发者工具，用户侧）
-- [ ] commit + push origin main
+- [x] `pnpm build:weapp` + `npx tsc --noEmit` 零错误
+- [x] 页面目录 grep 无新增 hex 字面量（tokens/overrides 除外）
+- [x] 每屏 ≤1 hero、≤2 实底 tile、刊头三件套齐全
+- [x] light/dark 逐 Tab 目视（微信开发者工具，用户侧）
+- [x] commit + push origin main

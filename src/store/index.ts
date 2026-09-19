@@ -190,9 +190,9 @@ class UiStore {
   syncTabBarStyle() {
     const dark = this.theme === 'dark'
     Taro.setTabBarStyle({
-      color: dark ? '#A3A3A3' : '#737373',
-      selectedColor: dark ? '#22D3EE' : '#5E6AD2',
-      backgroundColor: dark ? '#0A0A0A' : '#FFFFFF',
+      color: dark ? '#A3A3AD' : '#6B6B76',
+      selectedColor: dark ? '#22D3EE' : '#4752A8',
+      backgroundColor: dark ? '#101014' : '#FFFFFF',
       borderStyle: 'white',
     }).catch(() => {
       /* 非 tab 页调用会失败，忽略 */
