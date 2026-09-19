@@ -1,190 +1,293 @@
-import { View } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
+import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import Taro from '@tarojs/taro'
-import { useLoad } from '@tarojs/taro'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, EmptyState, MetricCard } from '@/components/ui'
+import { Card, RoleBadge, TaskCard } from '@/components/ui'
+import { Skeleton } from '@/components/states'
 import { authStore, taskStore } from '@/store'
+import * as taskService from '@/services/task'
+import * as roiService from '@/services/roi'
+import * as clubService from '@/services/club'
 import { ROUTES } from '@/constants'
-import {
-  countApprovedThisWeek,
-  teamCompletionRate,
-} from '@/services/task'
-import { formatRoiRatio } from '@/utils/format'
-import {
-  TASK_CATEGORY_LABEL,
-  TASK_STATUS_LABEL,
-  type Task,
-} from '@/types/domain'
+import { formatMoney2, formatRoiRatio } from '@/utils/format'
+import type { Announcement, RoiOverview, Task } from '@/types/domain'
 import './index.scss'
 
-function statusBadgeClass(status: Task['status']) {
-  if (status === 'APPROVED') return 'badge badge--success'
-  if (status === 'OPEN') return 'badge badge--brand'
-  if (status === 'REJECTED') return 'badge badge--destructive'
-  return 'badge badge--warning'
+interface HomeData {
+  myActive: Task[]
+  openCount: number
+  reviewCount: number
+  roi: RoiOverview | null
+  announcements: Announcement[]
 }
 
-function Index() {
-  const uid = authStore.currentUserId
-  const [claimingId, setClaimingId] = useState<string | null>(null)
+function Home() {
+  const [data, setData] = useState<HomeData | null>(null)
+  const [ready, setReady] = useState(false)
 
-  useLoad(() => {
+  const load = async () => {
+    if (!authStore.isLoggedIn) return
+    try {
+      const uid = authStore.user?.id || ''
+      const [mine, open, review, roi, anns] = await Promise.all([
+        taskService.fetchTasks({ assigneeId: uid, status: 'CLAIMED,SUBMITTED,REJECTED', size: 3 }),
+        taskService.fetchTasks({ status: 'OPEN', size: 1 }),
+        authStore.isManager
+          ? taskService.fetchTasks({ status: 'SUBMITTED', size: 1 })
+          : Promise.resolve(null),
+        roiService.fetchRoiOverview('month').catch(() => null),
+        clubService.fetchAnnouncements(0, 3).catch(() => null),
+      ])
+      setData({
+        myActive: mine.items,
+        openCount: open.total,
+        reviewCount: review?.total ?? 0,
+        roi,
+        announcements: anns?.items.filter((a) => a.status === 'PUBLISHED').slice(0, 2) || [],
+      })
+    } finally {
+      setReady(true)
+    }
+  }
+
+  useDidShow(() => {
+    if (authStore.status === 'LOADING') return
     if (!authStore.isLoggedIn) {
       Taro.reLaunch({ url: ROUTES.login })
       return
     }
-    taskStore.loadTasks()
-    taskStore.loadMyPerformance(uid)
+    void load()
   })
 
-  if (!authStore.isLoggedIn) {
-    return (
-      <PageShell title='Rak' subtitle='任务池'>
-        <EmptyState
-          title='尚未登录'
-          description='请先选择身份进入任务池'
-        />
-        <View
-          className='btn-primary'
-          onClick={() => Taro.reLaunch({ url: ROUTES.login })}
-        >
-          <View>去登录</View>
-        </View>
-      </PageShell>
-    )
+  usePullDownRefresh(async () => {
+    await load()
+    Taro.stopPullDownRefresh()
+  })
+
+  const greeting = () => {
+    const h = new Date().getHours()
+    if (h < 6) return '夜深了'
+    if (h < 12) return '早上好'
+    if (h < 18) return '下午好'
+    return '晚上好'
   }
 
-  const open = taskStore.openTasks
-  const mineActive = taskStore.myActive(uid)
-  const weekApproved = countApprovedThisWeek(taskStore.tasks, uid || '')
-  const teamRate = teamCompletionRate(taskStore.tasks)
-
   return (
-    <PageShell title='任务' subtitle={authStore.club?.name || 'flowmind 开发组'}>
-      <View className='stack-gap fade-in'>
-        <View className='home-hero surface-card'>
-          <View className='text-title'>你好，{authStore.displayName || '成员'}</View>
-          <View className='text-caption home-hero__sub'>
-            认领任务 → 交付验收 → 积累综合分
+    <PageShell title='Rak' subtitle={authStore.club?.name || ''}>
+      {!ready || !data ? (
+        <Skeleton rows={4} />
+      ) : (
+        <View className='stack-gap fade-in'>
+          {/* 问候 + 身份 */}
+          <View className='surface-card home-hello'>
+            <View className='flex-1'>
+              <Text className='text-title'>
+                {greeting()}，{authStore.user?.displayName || '成员'}
+              </Text>
+              <Text className='text-caption'>
+                {authStore.user?.duty || authStore.club?.name || ''}
+              </Text>
+            </View>
+            <RoleBadge role={authStore.clubRole} />
           </View>
-        </View>
 
-        <View className='metric-grid'>
-          <MetricCard label='待认领' value={String(open.length)} tone='brand' />
-          <MetricCard label='我进行中' value={String(mineActive.length)} />
-          <MetricCard label='本周已通过' value={String(weekApproved)} tone='success' />
-          <MetricCard label='团队完成率' value={formatRoiRatio(teamRate)} tone='muted' />
-        </View>
+          {/* 我的进行中 */}
+          <View>
+            <View className='row-between'>
+              <Text className='section-label'>我的进行中</Text>
+              <Text
+                className='text-caption text-brand'
+                onClick={() => Taro.switchTab({ url: ROUTES.taskPool })}
+              >
+                全部任务 ›
+              </Text>
+            </View>
+            <Card>
+              {data.myActive.length === 0 ? (
+                <View className='home-empty-clickable' onClick={() => Taro.switchTab({ url: ROUTES.taskPool })}>
+                  <Text className='text-caption'>当前没有进行中的任务，去任务池看看？</Text>
+                </View>
+              ) : (
+                <View className='stack-gap'>
+                  {data.myActive.map((t) => (
+                    <TaskCard
+                      key={t.id}
+                      task={t}
+                      compact
+                      onPress={() =>
+                        Taro.navigateTo({ url: `${ROUTES.taskDetail}?id=${t.id}` })
+                      }
+                    />
+                  ))}
+                </View>
+              )}
+            </Card>
+          </View>
 
-        <View>
-          <View className='section-label'>待认领任务</View>
-          {open.length === 0 ? (
-            <EmptyState
-              title='任务池暂时为空'
-              description='等管理员发布新任务，或去「我的任务」看看进度'
-            />
-          ) : (
-            <View className='stack-gap'>
-              {open.map((t) => (
-                <View key={t.id} className='surface-card task-card fade-in'>
+          {/* 待验收（manager+） */}
+          {authStore.isManager ? (
+            <View
+              className='surface-card home-review-entry pressable'
+              onClick={() => Taro.navigateTo({ url: ROUTES.adminReview })}
+            >
+              <View className='flex-1'>
+                <Text className='text-card-title'>任务验收</Text>
+                <Text className='text-caption'>
+                  {data.reviewCount > 0 ? `${data.reviewCount} 个任务等待验收` : '暂无待验收'}
+                </Text>
+              </View>
+              {data.reviewCount > 0 ? (
+                <View className='home-badge-dot'>
+                  <Text>{data.reviewCount}</Text>
+                </View>
+              ) : (
+                <Text className='text-caption'>›</Text>
+              )}
+            </View>
+          ) : null}
+
+          {/* ROI 速览 */}
+          {data.roi ? (
+            <View
+              className='surface-card pressable'
+              onClick={() => Taro.switchTab({ url: ROUTES.roiOverview })}
+            >
+              <View className='row-between'>
+                <Text className='section-label'>本月 ROI</Text>
+                <Text className='text-caption'>看板 ›</Text>
+              </View>
+              <View className='row-between home-roi-metrics'>
+                <View>
+                  <Text className='text-caption'>净额（元）</Text>
+                  <Text className='metric-value'>
+                    ¥{formatMoney2(data.roi.net)}
+                  </Text>
+                </View>
+                <View className='home-roi-ratio'>
+                  <Text className='text-caption'>ROI</Text>
+                  <Text
+                    className={`metric-value ${
+                      data.roi.roiRatio !== null && data.roi.roiRatio >= 0
+                        ? 'text-success'
+                        : 'text-destructive'
+                    }`}
+                  >
+                    {formatRoiRatio(data.roi.roiRatio)}
+                  </Text>
+                </View>
+              </View>
+              {data.roi.series.length > 0 ? <MiniBars series={data.roi.series} /> : null}
+            </View>
+          ) : null}
+
+          {/* 置顶/最新公告 */}
+          <View>
+            <View className='row-between'>
+              <Text className='section-label'>公告</Text>
+              <Text
+                className='text-caption text-brand'
+                onClick={() => Taro.navigateTo({ url: ROUTES.announcements })}
+              >
+                全部 ›
+              </Text>
+            </View>
+            <Card>
+              {data.announcements.length === 0 ? (
+                <Text className='text-caption'>最近没有新公告</Text>
+              ) : (
+                data.announcements.map((a) => (
                   <View
-                    className='task-card__main'
+                    key={a.id}
+                    className='list-row list-row--pressable'
                     onClick={() =>
-                      Taro.navigateTo({ url: `${ROUTES.taskDetail}?id=${t.id}` })
+                      Taro.navigateTo({
+                        url: `${ROUTES.announcementDetail}?id=${a.id}`,
+                      })
                     }
                   >
-                    <View className='row-gap mb-8'>
-                      <View className={statusBadgeClass(t.status)}>
-                        <View>{TASK_STATUS_LABEL[t.status]}</View>
-                      </View>
-                      <View className='badge'>
-                        <View>{TASK_CATEGORY_LABEL[t.category]}</View>
-                      </View>
-                      {t.repo ? (
-                        <View className='badge'>
-                          <View className='text-mono'>{t.repo}</View>
-                        </View>
-                      ) : null}
+                    <View className='flex-1'>
+                      <Text className='text-card-title'>
+                        {a.pinned ? '📌 ' : ''}
+                        {a.title}
+                      </Text>
+                      <Text className='text-caption'>
+                        {a.authorName || ''} · {a.publishedAt?.slice(0, 10) || ''}
+                      </Text>
                     </View>
-                    <View className='text-card-title task-card__title'>{t.title}</View>
-                    <View className='text-caption task-card__desc'>
-                      {t.description.slice(0, 48)}
-                      {t.description.length > 48 ? '…' : ''}
-                    </View>
+                    <Text className='text-caption'>›</Text>
                   </View>
-                  <View
-                    className={`btn-primary task-card__action ${
-                      claimingId === t.id ? 'btn-primary--disabled' : ''
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation?.()
-                      if (!uid || claimingId) return
-                      Taro.showModal({
-                        title: '确认认领',
-                        content: '认领后请在 7 天内提交验收。',
-                        confirmText: '认领',
-                        cancelText: '再想想',
-                        success: async (res) => {
-                          if (!res.confirm) return
-                          setClaimingId(t.id)
-                          try {
-                            await taskStore.claim(t.id, uid)
-                            Taro.showToast({ title: '已认领', icon: 'success' })
-                          } catch (err) {
-                            Taro.showToast({
-                              title: (err as Error).message || '认领失败',
-                              icon: 'none',
-                            })
-                          } finally {
-                            setClaimingId(null)
-                          }
-                        },
-                      })
-                    }}
-                  >
-                    <View>一键认领</View>
-                  </View>
-                </View>
-              ))}
+                ))
+              )}
+            </Card>
+          </View>
+
+          {/* 快捷动作（manager+） */}
+          {authStore.isManager ? (
+            <View className='home-actions'>
+              <View
+                className='home-actions__item pressable'
+                onClick={() => Taro.navigateTo({ url: ROUTES.adminTaskPublish })}
+              >
+                <Text>发布任务</Text>
+              </View>
+              <View
+                className='home-actions__item pressable'
+                onClick={() => Taro.navigateTo({ url: `${ROUTES.adminRoiEdit}?mode=create` })}
+              >
+                <Text>录入 ROI</Text>
+              </View>
+              <View
+                className='home-actions__item pressable'
+                onClick={() => Taro.navigateTo({ url: ROUTES.adminInvites })}
+              >
+                <Text>邀请码</Text>
+              </View>
+            </View>
+          ) : (
+            <View className='home-actions'>
+              <View
+                className='home-actions__item home-actions__item--wide pressable'
+                onClick={() => Taro.switchTab({ url: ROUTES.taskPool })}
+              >
+                <Text>去任务池领任务</Text>
+              </View>
             </View>
           )}
-        </View>
 
-        <View>
-          <View className='section-label'>我进行中</View>
-          {mineActive.length === 0 ? (
-            <Card>
-              <View className='text-caption'>暂无进行中的任务，去上面认领一条吧</View>
-            </Card>
-          ) : (
-            <Card className='stack-gap'>
-              {mineActive.map((t) => (
-                <View
-                  key={t.id}
-                  className='list-row list-row--pressable'
-                  onClick={() =>
-                    Taro.navigateTo({ url: `${ROUTES.taskDetail}?id=${t.id}` })
-                  }
-                >
-                  <View className='flex-1'>
-                    <View className='text-card-title'>{t.title}</View>
-                    <View className='text-caption'>
-                      {TASK_CATEGORY_LABEL[t.category]} · {TASK_STATUS_LABEL[t.status]}
-                    </View>
-                  </View>
-                  <View className={statusBadgeClass(t.status)}>
-                    <View>{TASK_STATUS_LABEL[t.status]}</View>
-                  </View>
-                </View>
-              ))}
-            </Card>
-          )}
+          <Text className='text-caption home-foot'>
+            任务池 · 团队 · ROI —— 打开即用
+          </Text>
+          {/* 借用 store 引用保证 observer 依赖刷新 */}
+          {taskStore.total ? null : null}
         </View>
-      </View>
+      )}
     </PageShell>
   )
 }
 
-export default observer(Index)
+/** 首页迷你双柱（近 6 月成本/收益，纯 view） */
+function MiniBars({ series }: { series: RoiOverview['series'] }) {
+  const max = Math.max(1, ...series.flatMap((s) => [s.cost, s.revenue]))
+  return (
+    <View className='bar-chart' style={{ height: '140rpx', marginTop: '16rpx' }}>
+      {series.map((s) => (
+        <View key={s.label} className='bar-chart__group'>
+          <View className='bar-chart__bars'>
+            <View
+              className='bar-chart__bar bar-chart__bar--cost'
+              style={{ height: `${(s.cost / max) * 100}%` }}
+            />
+            <View
+              className='bar-chart__bar bar-chart__bar--rev'
+              style={{ height: `${(s.revenue / max) * 100}%` }}
+            />
+          </View>
+          <Text className='bar-chart__label'>{s.label.slice(5)}</Text>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+export default observer(Home)

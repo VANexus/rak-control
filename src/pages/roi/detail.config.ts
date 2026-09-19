@@ -1,4 +1,4 @@
 export default definePageConfig({
-  navigationBarTitleText: '申请加入',
+  navigationBarTitleText: '项目明细',
   navigationStyle: 'custom',
 })

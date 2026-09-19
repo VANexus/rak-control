@@ -20,6 +20,9 @@ page {
   --color-secondary-foreground: #0a0a0a;
   --color-accent: rgba(0, 0, 0, 0.08);
   --color-brand: #5e6ad2;
+  --color-logo: #5e6ad2;
+  --color-surface-1: #fafafa;
+  --color-surface-2: #f5f5f5;
   --color-success: #00c984;
   --color-warning: #e6a23c;
   --color-destructive: #e5484d;
@@ -57,6 +60,10 @@ page {
     "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
+  /* skeleton */
+  --sk-base: rgba(0, 0, 0, 0.05);
+  --sk-hi: rgba(0, 0, 0, 0.09);
+
   /* surface */
   background-color: var(--color-background);
   color: var(--color-foreground);
@@ -82,7 +89,11 @@ page.theme-dark,
   --color-secondary: rgba(255, 255, 255, 0.1);
   --color-secondary-foreground: #fafafa;
   --color-accent: rgba(255, 255, 255, 0.12);
-  --color-brand: #5e6ad2;
+  /* dark 第二主题：强调体系整体切换 Neon 青（DESIGN.md §双主题），brand 仅 logo 用紫 */
+  --color-brand: #22d3ee;
+  --color-logo: #5e6ad2;
+  --color-surface-1: #101010;
+  --color-surface-2: #141414;
   --color-success: #00e599;
   --color-warning: #e6a23c;
   --color-destructive: #ff6369;
@@ -92,4 +103,6 @@ page.theme-dark,
   --color-chart-4: #fcc419;
   --color-chart-5: #9775fa;
   --shadow-overlay: 0 8rpx 32rpx rgba(0, 0, 0, 0.45);
+  --sk-base: rgba(255, 255, 255, 0.06);
+  --sk-hi: rgba(255, 255, 255, 0.12);
 }

@@ -1,5 +1,4 @@
 .metric-card {
-  background: #ffffff;
   background: var(--color-card);
   border: var(--hairline) solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -23,4 +22,74 @@
   letter-spacing: -0.5rpx;
   color: var(--color-foreground);
   line-height: 1.2;
+}
+
+/* ===== 任务卡 ===== */
+.task-card {
+  display: flex;
+  background: var(--color-card);
+  border: var(--hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.task-card__strip {
+  width: 8rpx;
+  flex-shrink: 0;
+  background: var(--color-muted-foreground);
+}
+
+.task-card--open .task-card__strip,
+.task-card--submitted .task-card__strip {
+  background: var(--color-brand);
+}
+
+.task-card--claimed .task-card__strip {
+  background: var(--color-warning);
+}
+
+.task-card--approved .task-card__strip,
+.task-card--done .task-card__strip {
+  background: var(--color-success);
+}
+
+.task-card--rejected .task-card__strip {
+  background: var(--color-destructive);
+}
+
+.task-card__body {
+  flex: 1;
+  min-width: 0;
+  padding: 24rpx 28rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.task-card__title {
+  flex: 1;
+  min-width: 0;
+  margin-right: 16rpx;
+}
+
+.task-card__desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.task-card__meta {
+  margin-top: 4rpx;
+}
+
+/* 分类/仓库小胶囊（非 badge 语义） */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2rpx 14rpx;
+  border-radius: var(--radius-sm);
+  background: var(--color-secondary);
+  color: var(--color-secondary-foreground);
+  font-size: 20rpx;
 }

@@ -1,5 +1,7 @@
 import { View, Text } from '@tarojs/components'
 import type { ReactNode } from 'react'
+import { relTime } from '@/utils/format'
+import { TASK_CATEGORY_LABEL, TASK_STATUS_LABEL, type Task } from '@/types/domain'
 import './ui.scss'
 
 export function Card({
@@ -84,4 +86,72 @@ export function MetricCard({
       </Text>
     </View>
   )
+}
+
+/** 任务卡（全站统一：池/首页/我的/验收队列） */
+export function TaskCard({
+  task,
+  onPress,
+  compact = false,
+}: {
+  task: Task
+  onPress?: () => void
+  compact?: boolean
+}) {
+  return (
+    <View
+      className={`task-card pressable task-card--${task.status.toLowerCase()}`}
+      onClick={onPress}
+    >
+      <View className='task-card__strip' />
+      <View className='task-card__body'>
+        <View className='row-between'>
+          <Text className='text-card-title task-card__title'>{task.title}</Text>
+          <View className={`badge badge--${statusTone(task.status)}`}>
+            <Text>{TASK_STATUS_LABEL[task.status]}</Text>
+          </View>
+        </View>
+        {!compact ? (
+          <Text className='text-caption task-card__desc'>
+            {task.description.length > 44
+              ? `${task.description.slice(0, 44)}…`
+              : task.description}
+          </Text>
+        ) : null}
+        <View className='row-between task-card__meta'>
+          <View className='row-gap'>
+            <View className='chip'>
+              <Text>{TASK_CATEGORY_LABEL[task.category] || task.category}</Text>
+            </View>
+            {task.repo ? (
+              <Text className='text-caption text-mono'>@{task.repo}</Text>
+            ) : null}
+          </View>
+          <Text className='text-caption'>
+            {task.assigneeName
+              ? `${task.assigneeName} · ${relTime(task.claimedAt)}`
+              : relTime(task.updatedAt)}
+          </Text>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+function statusTone(status: Task['status']): string {
+  switch (status) {
+    case 'OPEN':
+      return 'brand'
+    case 'CLAIMED':
+      return 'warning'
+    case 'SUBMITTED':
+      return 'brand'
+    case 'APPROVED':
+    case 'DONE':
+      return 'success'
+    case 'REJECTED':
+      return 'destructive'
+    default:
+      return ''
+  }
 }

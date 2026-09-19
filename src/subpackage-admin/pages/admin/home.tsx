@@ -1,21 +1,62 @@
 import { View, Text } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useState } from 'react'
 import PageShell from '@/components/page-shell'
 import { Card } from '@/components/ui'
-import { authStore, teamStore, taskStore } from '@/store'
+import { authStore, teamStore } from '@/store'
+import * as taskService from '@/services/task'
+import * as memberService from '@/services/member'
 import { ROUTES } from '@/constants'
 import { roleLabel } from '@/utils/permission'
+import '../../admin.scss'
 
 function AdminHome() {
-  useEffect(() => {
-    taskStore.loadTasks()
-    teamStore.loadJoinRequests()
-  }, [])
+  const [counts, setCounts] = useState({ review: 0, join: 0 })
 
-  const pendingReview = taskStore.tasks.filter((t) => t.status === 'SUBMITTED')
-  const pendingJoin = teamStore.joinRequests.filter((r) => r.status === 'PENDING')
+  useDidShow(() => {
+    if (!authStore.isLoggedIn) {
+      Taro.reLaunch({ url: ROUTES.login })
+      return
+    }
+    void (async () => {
+      const [review, joinReq] = await Promise.all([
+        taskService.fetchTasks({ status: 'SUBMITTED', size: 1 }).catch(() => null),
+        memberService.fetchJoinRequests('PENDING').catch(() => []),
+      ])
+      setCounts({ review: review?.total ?? 0, join: joinReq?.length ?? 0 })
+      teamStore.joinRequests = joinReq || []
+    })()
+  })
+
+  const Entry = ({
+    title,
+    hint,
+    url,
+    badge,
+  }: {
+    title: string
+    hint: string
+    url: string
+    badge?: number
+  }) => (
+    <View
+      className='list-row list-row--pressable'
+      onClick={() => Taro.navigateTo({ url })}
+    >
+      <View className='flex-1'>
+        <Text className='text-card-title'>{title}</Text>
+        <Text className='text-caption'>{hint}</Text>
+      </View>
+      {badge ? (
+        <View className='home-badge-dot'>
+          <Text>{badge}</Text>
+        </View>
+      ) : (
+        <Text className='text-caption'>›</Text>
+      )}
+    </View>
+  )
 
   return (
     <PageShell
@@ -26,68 +67,43 @@ function AdminHome() {
     >
       <View className='stack-gap fade-in'>
         <Card className='stack-gap'>
-          <Text className='section-label'>运营</Text>
-          <View
-            className='list-row list-row--pressable'
-            onClick={() => Taro.navigateTo({ url: ROUTES.adminTaskPublish })}
-          >
-            <Text className='text-card-title'>发布任务</Text>
-            <Text className='text-caption'>写入任务池 · OPEN</Text>
-          </View>
-          <View
-            className='list-row list-row--pressable'
-            onClick={() => Taro.navigateTo({ url: ROUTES.adminReview })}
-          >
-            <Text className='text-card-title'>任务验收</Text>
-            <Text className='text-caption'>待验收 {pendingReview.length}</Text>
-          </View>
-          <View
-            className='list-row list-row--pressable'
-            onClick={() => Taro.navigateTo({ url: ROUTES.adminMembers })}
-          >
-            <Text className='text-card-title'>成员管理</Text>
-            <Text className='text-caption'>完成情况 / 职责</Text>
-          </View>
-          <View
-            className='list-row list-row--pressable'
-            onClick={() => Taro.navigateTo({ url: ROUTES.adminJoinRequests })}
-          >
-            <Text className='text-card-title'>申请审批</Text>
-            <Text className='text-caption'>待处理 {pendingJoin.length}</Text>
-          </View>
-          <View
-            className='list-row list-row--pressable'
-            onClick={() => Taro.navigateTo({ url: ROUTES.adminInvites })}
-          >
-            <Text className='text-card-title'>邀请码</Text>
-            <Text className='text-caption'>生成 / 列表</Text>
-          </View>
-          <View
-            className='list-row list-row--pressable'
-            onClick={() => Taro.navigateTo({ url: ROUTES.adminAnnouncements })}
-          >
-            <Text className='text-card-title'>公告</Text>
-            <Text className='text-caption'>团队通知</Text>
-          </View>
-          <View
-            className='list-row list-row--pressable'
-            onClick={() => Taro.navigateTo({ url: ROUTES.adminClubSettings })}
-          >
-            <Text className='text-card-title'>团队设置</Text>
-            <Text className='text-caption'>名称 / 简介</Text>
-          </View>
+          <Text className='section-label'>任务</Text>
+          <Entry title='发布任务' hint='写入任务池 · OPEN' url={ROUTES.adminTaskPublish} />
+          <Entry
+            title='任务验收'
+            hint={counts.review > 0 ? `${counts.review} 个待验收` : '暂无待验收'}
+            url={ROUTES.adminReview}
+            badge={counts.review}
+          />
+        </Card>
+
+        <Card className='stack-gap'>
+          <Text className='section-label'>ROI 财务</Text>
+          <Entry
+            title='录入 / 编辑项目'
+            hint='项目与活动收支 · ROI 自动计算'
+            url={`${ROUTES.adminRoiEdit}?mode=create`}
+          />
+          <Entry title='看板' hint='切到 ROI Tab 查看概览' url={ROUTES.roiList} />
+        </Card>
+
+        <Card className='stack-gap'>
+          <Text className='section-label'>团队运营</Text>
+          <Entry title='申请审批' hint={counts.join > 0 ? `${counts.join} 条待处理` : '暂无待处理'} url={ROUTES.adminJoinRequests} badge={counts.join} />
+          <Entry title='邀请码' hint='生成 / 小程序码 / 作废' url={ROUTES.adminInvites} />
+          <Entry title='公告' hint='发布 / 置顶 / 归档' url={ROUTES.adminAnnouncements} />
+          <Entry title='成员管理' hint='状态变更 · 名册' url={ROUTES.adminMembers} />
+          <Entry title='团队设置' hint='名称 / 简介 / 目录开关' url={ROUTES.adminClubSettings} />
         </Card>
 
         {authStore.isSuper ? (
           <Card className='stack-gap'>
-            <Text className='section-label text-brand'>超级后台（仅产品负责人）</Text>
-            <View
-              className='list-row list-row--pressable'
-              onClick={() => Taro.navigateTo({ url: ROUTES.superRoles })}
-            >
-              <Text className='text-card-title text-brand'>职责分配</Text>
-              <Text className='text-caption'>manager 任免 · 无感进入</Text>
-            </View>
+            <Text className='section-label text-brand'>超级后台（仅超级管理员）</Text>
+            <Entry
+              title='角色任免'
+              hint='manager / member 任免'
+              url={ROUTES.superRoles}
+            />
           </Card>
         ) : null}
       </View>

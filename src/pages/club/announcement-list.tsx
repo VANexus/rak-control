@@ -1,48 +1,91 @@
 import { View, Text } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow, usePullDownRefresh, useReachBottom } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, EmptyState } from '@/components/ui'
-import { teamStore } from '@/store'
+import { ListState } from '@/components/states'
+import { authStore, teamStore } from '@/store'
 import { ROUTES } from '@/constants'
-import { formatDateTime } from '@/utils/format'
+import { formatDate } from '@/utils/format'
+import './club.scss'
 
 function AnnouncementList() {
-  useEffect(() => {
-    teamStore.loadAnnouncements()
-  }, [])
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState<string | null>(null)
 
-  const list = teamStore.announcements.filter((a) => a.status === 'PUBLISHED')
+  const reload = async (reset = true) => {
+    setLoading(reset ? true : teamStore.announcements.length === 0)
+    try {
+      await teamStore.loadAnnouncements(reset ? 0 : Math.ceil(teamStore.announcements.length / 20))
+      setErr(null)
+    } catch {
+      setErr('加载公告失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useDidShow(() => {
+    if (authStore.status === 'LOADING') return
+    void reload(true)
+  })
+
+  usePullDownRefresh(async () => {
+    await reload(true)
+    Taro.stopPullDownRefresh()
+  })
+
+  useReachBottom(() => {
+    if (teamStore.announcements.length < teamStore.annTotal) void reload(false)
+  })
 
   return (
     <PageShell title='公告' showBack>
-      {list.length === 0 ? (
-        <EmptyState title='暂无公告' description='管理员发布后会出现在这里' />
-      ) : (
-        <Card className='stack-gap fade-in'>
-          {list.map((a) => (
+      <ListState
+        loading={loading && teamStore.announcements.length === 0}
+        error={err}
+        empty={teamStore.announcements.length === 0}
+        onRetry={() => reload(true)}
+        emptyTitle='还没有公告'
+        emptyHint={authStore.isManager ? '去管理面板发布第一条' : '管理层发布后会出现在这里'}
+        emptyAction={
+          authStore.isManager ? (
+            <View
+              className='btn-primary pressable'
+              onClick={() => Taro.navigateTo({ url: ROUTES.adminAnnouncements })}
+            >
+              <Text>发布公告</Text>
+            </View>
+          ) : null
+        }
+      >
+        <View className='surface-card'>
+          {teamStore.announcements.map((a) => (
             <View
               key={a.id}
-              className='list-row list-row--pressable'
+              className='ann-card pressable'
               onClick={() =>
                 Taro.navigateTo({ url: `${ROUTES.announcementDetail}?id=${a.id}` })
               }
             >
-              <View className='flex-1'>
-                <Text className='text-card-title'>
-                  {a.pinned ? '置顶 · ' : ''}
+              <View className='row-between'>
+                <Text className='text-card-title flex-1'>
+                  {a.pinned ? '📌 ' : ''}
                   {a.title}
                 </Text>
-                <Text className='text-caption text-mono'>
-                  {formatDateTime(a.publishedAt)} · {a.authorName || '管理员'}
-                </Text>
+                {a.status === 'DRAFT' ? (
+                  <View className='badge badge--warning'>
+                    <Text>草稿</Text>
+                  </View>
+                ) : null}
               </View>
-              <Text className='text-caption'>›</Text>
+              <Text className='text-caption'>
+                {a.authorName || ''} · {formatDate(a.publishedAt || a.createdAt)}
+              </Text>
             </View>
           ))}
-        </Card>
-      )}
+        </View>
+      </ListState>
     </PageShell>
   )
 }

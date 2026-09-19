@@ -3,137 +3,136 @@ import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card } from '@/components/ui'
 import { authStore, taskStore } from '@/store'
+import { REPO_OPTIONS, ROUTES } from '@/constants'
+import { TASK_CATEGORY_LABEL, type TaskCategory } from '@/types/domain'
+import { ApiError } from '@/utils/request'
 import { toast } from '@/utils/toast'
-import {
-  REPO_OPTIONS,
-  TASK_CATEGORY_LABEL,
-  type TaskCategory,
-} from '@/types/domain'
-
-const CATEGORY_KEYS = Object.keys(TASK_CATEGORY_LABEL) as TaskCategory[]
-const CATEGORY_NAMES = CATEGORY_KEYS.map((k) => TASK_CATEGORY_LABEL[k])
+import '../../admin.scss'
 
 function TaskPublish() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState<TaskCategory>('cross-dashboard')
-  const [catIndex, setCatIndex] = useState(0)
-  const [repo, setRepo] = useState<string>('')
-  const [repoIndex, setRepoIndex] = useState(-1)
+  const [category, setCategory] = useState<TaskCategory>('content')
+  const [repo, setRepo] = useState('')
   const [criteria, setCriteria] = useState('')
+  const [errs, setErrs] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
+
+  const submit = async () => {
+    const e: Record<string, string> = {}
+    if (!title.trim()) e.title = '必填'
+    else if (title.trim().length > 40) e.title = '不超过 40 字'
+    if (!description.trim()) e.description = '写清楚要做什么、交付在哪'
+    setErrs(e)
+    if (Object.keys(e).length) return
+    setBusy(true)
+    try {
+      await taskStore.publish({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        repo: repo || null,
+        acceptanceCriteria: criteria.trim() || null,
+      })
+      setTimeout(() => Taro.navigateBack(), 600)
+    } catch (err) {
+      if (err instanceof ApiError) toast(err.userMessage)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <PageShell title='发布任务' showBack requireRole='manage'>
-      <Card className='stack-gap fade-in'>
-        <Text className='section-label'>标题（≤40 字）</Text>
-        <Input
-          className='form__input'
-          value={title}
-          maxlength={40}
-          placeholder='一句话说清要交付什么'
-          placeholderClass='text-muted'
-          onInput={(e) => setTitle(String(e.detail.value))}
-        />
-
-        <Text className='section-label'>类目</Text>
-        <Picker
-          mode='selector'
-          range={CATEGORY_NAMES}
-          value={catIndex}
-          onChange={(e) => {
-            const i = Number(e.detail.value)
-            setCatIndex(i)
-            setCategory(CATEGORY_KEYS[i])
-          }}
-        >
-          <View className='form__input row-between'>
-            <Text>{TASK_CATEGORY_LABEL[category]}</Text>
-            <Text className='text-caption'>选择</Text>
-          </View>
-        </Picker>
-
-        <Text className='section-label'>仓库（可选）</Text>
-        <Picker
-          mode='selector'
-          range={['（无）', ...REPO_OPTIONS]}
-          value={repoIndex < 0 ? 0 : repoIndex + 1}
-          onChange={(e) => {
-            const i = Number(e.detail.value)
-            if (i === 0) {
-              setRepoIndex(-1)
-              setRepo('')
-            } else {
-              setRepoIndex(i - 1)
-              setRepo(REPO_OPTIONS[i - 1])
-            }
-          }}
-        >
-          <View className='form__input row-between'>
-            <Text className={repo ? 'text-mono' : 'text-muted'}>
-              {repo || '（无）'}
+      <View className='surface-card fade-in'>
+        <View className='admin-form'>
+          <View className='admin-field'>
+            <Text className='admin-field__label'>
+              标题（{title.length}/40）
+              {errs.title ? <Text className='admin-field__err'> · {errs.title}</Text> : null}
             </Text>
-            <Text className='text-caption'>选择</Text>
+            <Input
+              className='admin-input'
+              value={title}
+              maxlength={40}
+              placeholder='一句话说清要做什么'
+              onInput={(e) => setTitle(e.detail.value)}
+            />
           </View>
-        </Picker>
 
-        <Text className='section-label'>详细需求</Text>
-        <Textarea
-          className='form__textarea'
-          value={description}
-          maxlength={500}
-          placeholder='2–3 句具体要求'
-          placeholderClass='text-muted'
-          onInput={(e) => setDescription(String(e.detail.value))}
-        />
+          <View className='admin-field'>
+            <Text className='admin-field__label'>
+              描述{errs.description ? <Text className='admin-field__err'> · {errs.description}</Text> : null}
+            </Text>
+            <Textarea
+              className='admin-textarea'
+              value={description}
+              maxlength={2000}
+              placeholder='背景、范围、交付物位置…'
+              onInput={(e) => setDescription(e.detail.value)}
+            />
+          </View>
 
-        <Text className='section-label'>验收标准（可选）</Text>
-        <Textarea
-          className='form__textarea'
-          value={criteria}
-          maxlength={200}
-          placeholder='可演示 / 有文档 / 有链接…'
-          placeholderClass='text-muted'
-          onInput={(e) => setCriteria(String(e.detail.value))}
-        />
+          <View className='admin-field'>
+            <Text className='admin-field__label'>分类</Text>
+            <View className='admin-chips'>
+              {(Object.keys(TASK_CATEGORY_LABEL) as TaskCategory[]).map((c) => (
+                <View
+                  key={c}
+                  className={`admin-chip pressable ${category === c ? 'admin-chip--on' : ''}`}
+                  onClick={() => setCategory(c)}
+                >
+                  <Text>{TASK_CATEGORY_LABEL[c]}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
 
-        <View
-          className={`btn-primary ${busy ? 'btn-primary--disabled' : ''}`}
-          onClick={async () => {
-            if (busy) return
-            if (!title.trim() || !description.trim()) {
-              toast('请填写标题与详细需求')
-              return
-            }
-            const createdBy = authStore.currentUserId
-            if (!createdBy) {
-              toast('未登录')
-              return
-            }
-            setBusy(true)
-            try {
-              await taskStore.publish({
-                title: title.trim(),
-                description: description.trim(),
-                category,
-                repo: repo || null,
-                acceptanceCriteria: criteria.trim() || null,
-                createdBy,
-              })
-              toast('已发布到任务池', 'success')
-              setTimeout(() => Taro.navigateBack(), 500)
-            } catch (e) {
-              toast((e as Error).message || '发布失败')
-            } finally {
-              setBusy(false)
-            }
-          }}
-        >
-          <Text>发布到任务池</Text>
+          <View className='admin-field'>
+            <Text className='admin-field__label'>关联仓库（可选）</Text>
+            <Picker
+              mode='selector'
+              range={['（不关联）', ...REPO_OPTIONS]}
+              value={repo ? REPO_OPTIONS.indexOf(repo) + 1 : 0}
+              onChange={(e) => {
+                const idx = Number(e.detail.value)
+                setRepo(idx === 0 ? '' : REPO_OPTIONS[idx - 1])
+              }}
+            >
+              <View className='admin-input row-between'>
+                <Text className={repo ? '' : 'text-muted'}>{repo || '选择仓库'}</Text>
+                <Text className='text-caption'>›</Text>
+              </View>
+            </Picker>
+          </View>
+
+          <View className='admin-field'>
+            <Text className='admin-field__label'>验收标准（可选）</Text>
+            <Textarea
+              className='admin-textarea'
+              style={{ minHeight: '140rpx' }}
+              value={criteria}
+              placeholder='怎样才算通过？'
+              onInput={(e) => setCriteria(e.detail.value)}
+            />
+          </View>
+
+          <View
+            className={`btn-primary pressable ${busy ? 'btn-primary--disabled' : ''}`}
+            onClick={busy ? undefined : submit}
+          >
+            <Text>{busy ? '发布中…' : '发布到任务池'}</Text>
+          </View>
+          <Text
+            className='text-caption'
+            style={{ textAlign: 'center' }}
+            onClick={() => Taro.switchTab({ url: ROUTES.taskPool })}
+          >
+            发布后可在任务池查看
+          </Text>
         </View>
-      </Card>
+      </View>
     </PageShell>
   )
 }

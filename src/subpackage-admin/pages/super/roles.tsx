@@ -1,69 +1,83 @@
 import { View, Text } from '@tarojs/components'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useState } from 'react'
 import PageShell from '@/components/page-shell'
 import { Card, RoleBadge } from '@/components/ui'
+import { Skeleton, EmptyView } from '@/components/states'
 import { authStore, teamStore } from '@/store'
-import { OWNER_USER_ID } from '@/constants'
 import { toast } from '@/utils/toast'
+import type { ClubMember, ClubRole } from '@/types/domain'
+import '../../admin.scss'
 
-/**
- * 超管职责分配：不在登录页展示超管入口。
- * 分配 manager 后，相关成员无感进入对应管理视图。
- */
+/** 仅 super_admin：manager / member 任免（服务端 403 兜底，见 API.md §7.5） */
 function SuperRoles() {
-  useEffect(() => {
-    teamStore.loadMembers()
-    teamStore.loadPerformance()
-  }, [])
+  const [loading, setLoading] = useState(true)
+
+  useDidShow(() => {
+    Promise.all([teamStore.loadMembers(), teamStore.loadPerformance()]).finally(() =>
+      setLoading(false)
+    )
+  })
+
+  const change = async (m: ClubMember) => {
+    const options: { label: string; role: ClubRole }[] =
+      m.clubRole === 'manager'
+        ? [{ label: '降为成员', role: 'member' }]
+        : [{ label: '任命为管理层', role: 'manager' }]
+    const pick = await Taro.showActionSheet({ itemList: options.map((o) => o.label) }).catch(() => null)
+    if (!pick) return
+    const target = options[pick.tapIndex]
+    try {
+      await teamStore.setRole(m.userId, target.role)
+      toast(target.role === 'manager' ? '已任命管理层' : '已降为成员', 'success')
+    } catch {
+      /* store 已提示 */
+    }
+  }
+
+  if (loading) {
+    return (
+      <PageShell title='角色任免' showBack requireRole='super'>
+        <Skeleton rows={4} />
+      </PageShell>
+    )
+  }
+
+  const roster = teamStore.members.filter(
+    (m) => m.status === 'ACTIVE' && m.clubRole !== 'super_admin'
+  )
 
   return (
-    <PageShell
-      title='职责分配'
-      showBack
-      requireRole='super'
-      subtitle='仅产品负责人 · 分配后成员无感进入'
-    >
-      <Card className='stack-gap fade-in'>
-        <Text className='section-label'>在册成员</Text>
-        {teamStore.members.map((m) => (
-          <View key={m.userId} className='list-row'>
-            <View className='flex-1'>
-              <View className='row-gap'>
-                <Text className='text-card-title'>{m.displayName}</Text>
-                <RoleBadge role={m.clubRole} />
+    <PageShell title='角色任免' showBack requireRole='super' subtitle='仅超级管理员'>
+      {roster.length === 0 ? (
+        <EmptyView title='没有可任免的成员' hint='超级管理员自身不出现在任免名单' />
+      ) : (
+        <Card className='fade-in'>
+          {roster.map((m) => (
+            <View key={m.id} className='member-row'>
+              <View className='avatar-dot'>
+                <Text>{(m.displayName || '成').slice(0, 1)}</Text>
               </View>
-              <Text className='text-caption'>{m.duty || '—'}</Text>
+              <View className='flex-1'>
+                <View className='row-gap'>
+                  <Text className='text-card-title'>{m.displayName || '成员'}</Text>
+                  <RoleBadge role={m.clubRole} />
+                </View>
+                <Text className='text-caption'>{m.duty || '成员'}</Text>
+              </View>
+              <Text className='text-caption text-brand' onClick={() => change(m)}>
+                {m.clubRole === 'manager' ? '撤销' : '任命'}
+              </Text>
             </View>
-            {m.userId === OWNER_USER_ID ? (
-              <Text className='text-caption'>产品负责人</Text>
-            ) : (
-              <View
-                className={`badge ${m.clubRole === 'manager' ? '' : 'badge--brand'}`}
-                onClick={async () => {
-                  const next = m.clubRole === 'manager' ? 'member' : 'manager'
-                  try {
-                    await teamStore.setRole(m.userId, next)
-                    toast(
-                      next === 'manager'
-                        ? `${m.displayName} → 管理层`
-                        : `${m.displayName} → 成员`,
-                      'success'
-                    )
-                  } catch (e) {
-                    toast((e as Error).message || '失败')
-                  }
-                }}
-              >
-                <Text>{m.clubRole === 'manager' ? '撤销管理层' : '设为管理层'}</Text>
-              </View>
-            )}
-          </View>
-        ))}
-        <Text className='text-caption'>
-          manager 可发布任务、验收打分。职责标签可在后续 SaaS 多团队架构中细化分配。
-        </Text>
-      </Card>
+          ))}
+          {authStore.isSuper ? (
+            <Text className='text-caption' style={{ display: 'block', marginTop: '16rpx' }}>
+              超级管理员不可被授予或撤销；最后一个超管受服务端保护
+            </Text>
+          ) : null}
+        </Card>
+      )}
     </PageShell>
   )
 }

@@ -1,17 +1,53 @@
-.detail__text {
-  white-space: pre-wrap;
-  line-height: 1.6;
+/* 任务详情专属样式 */
+
+.detail-tags {
+  margin-top: 16rpx;
+  flex-wrap: wrap;
 }
 
-.detail__textarea {
-  width: 100%;
-  min-height: 160rpx;
-  padding: 20rpx 24rpx;
-  background: var(--color-muted);
-  border: var(--hairline) solid var(--color-input);
-  border-radius: var(--radius-md);
-  color: var(--color-foreground);
-  font-size: 28rpx;
-  line-height: 1.5;
-  box-sizing: border-box;
+.detail-block {
+  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.detail-block--danger {
+  background: var(--color-surface-2);
+  border-left: 6rpx solid var(--color-destructive);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 16rpx 20rpx;
+}
+
+.detail-assignee {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: var(--hairline) solid var(--color-border);
+}
+
+.detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap);
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+}
+
+.btn-danger-text {
+  color: var(--color-destructive);
+}
+
+.rise-in {
+  animation: rise-in-kf 240ms var(--ease-expo) both;
+}
+
+@keyframes rise-in-kf {
+  from {
+    opacity: 0;
+    transform: translateY(8rpx) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

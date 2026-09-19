@@ -1,15 +1,13 @@
 import { PropsWithChildren } from 'react'
 import { useLaunch } from '@tarojs/taro'
-import { ensureSeeded } from '@/services/local-db'
+import { authStore, uiStore } from '@/store'
 import './app.scss'
 
 function App({ children }: PropsWithChildren<any>) {
   useLaunch(() => {
-    try {
-      ensureSeeded()
-    } catch (e) {
-      console.error('[rak-control] seed failed', e)
-    }
+    // 冷启动静默登录链（设计 §3）；主题同步原生 TabBar
+    uiStore.syncTabBarStyle()
+    void authStore.bootstrap()
   })
 
   return children

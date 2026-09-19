@@ -1,70 +1,82 @@
 import { View, Text } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card } from '@/components/ui'
+import { Card, RoleBadge } from '@/components/ui'
+import { Skeleton } from '@/components/states'
 import { authStore, teamStore } from '@/store'
-import { OWNER_USER_ID } from '@/constants'
-import { formatRoiRatio } from '@/utils/format'
-import { roleLabel } from '@/utils/permission'
+import { formatDate } from '@/utils/format'
+import '../../admin.scss'
 
 function AdminMembers() {
-  useEffect(() => {
-    teamStore.loadMembers()
-    teamStore.loadPerformance()
-  }, [])
+  const [loading, setLoading] = useState(true)
 
-  const perfMap = new Map(teamStore.allPerformance.map((p) => [p.userId, p]))
+  const reload = () => teamStore.loadMembers().finally(() => setLoading(false))
+
+  useDidShow(() => {
+    void reload()
+  })
+
+  usePullDownRefresh(async () => {
+    await reload()
+    Taro.stopPullDownRefresh()
+  })
+
+  const changeStatus = async (userId: string, current: string) => {
+    const options = ['ACTIVE', 'LEFT', 'DISABLED']
+    const idx = options.indexOf(current)
+    const pick = await Taro.showActionSheet({
+      itemList: ['设为在册', '设为离队', '设为停用'].filter((_, i) => i !== idx),
+    }).catch(() => null)
+    if (!pick) return
+    const target = options.filter((_, i) => i !== idx)[pick.tapIndex]
+    await teamStore.setMemberStatus(userId, target)
+  }
+
+  if (loading) {
+    return (
+      <PageShell title='成员管理' showBack requireRole='manage'>
+        <Skeleton rows={4} />
+      </PageShell>
+    )
+  }
 
   return (
-    <PageShell title='成员管理' showBack requireRole='manage' subtitle={roleLabel(authStore.clubRole)}>
-      <Card className='fade-in stack-gap'>
+    <PageShell title='成员管理' showBack requireRole='manage' subtitle={`在册 ${teamStore.members.filter((m) => m.status === 'ACTIVE').length}`}>
+      <Card className='fade-in'>
         {teamStore.members.map((m) => {
-          const p = perfMap.get(m.userId)
+          const name = m.displayName || '成员'
           return (
-            <View key={m.userId} className='list-row'>
+            <View key={m.id} className='member-row'>
+              <View className='avatar-dot'>
+                <Text>{name.slice(0, 1)}</Text>
+              </View>
               <View className='flex-1'>
                 <View className='row-gap'>
-                  <Text className='text-card-title'>{m.displayName}</Text>
+                  <Text className='text-card-title'>{name}</Text>
+                  <RoleBadge role={m.clubRole} />
+                  {m.status !== 'ACTIVE' ? (
+                    <View className='badge badge--destructive'>
+                      <Text>{m.status === 'LEFT' ? '离队' : '停用'}</Text>
+                    </View>
+                  ) : null}
                 </View>
                 <Text className='text-caption'>
-                  {m.duty || '—'}
-                  {m.userId === OWNER_USER_ID
-                    ? ' · 产品负责人'
-                    : p
-                      ? ` · 认领 ${p.claimedCount} / 通过 ${p.approvedCount} · 完成率 ${formatRoiRatio(p.completionRate)}`
-                      : ''}
+                  {m.duty || '成员'} · 入队 {formatDate(m.joinedAt)}
                 </Text>
               </View>
-              {authStore.isSuper && m.userId !== OWNER_USER_ID ? (
-                <View
-                  className='badge badge--brand'
-                  onClick={async () => {
-                    const next = m.clubRole === 'manager' ? 'member' : 'manager'
-                    try {
-                      await teamStore.setRole(m.userId, next)
-                      Taro.showToast({
-                        title: next === 'manager' ? '已设为管理层' : '已降为成员',
-                        icon: 'success',
-                      })
-                    } catch (e) {
-                      Taro.showToast({
-                        title: (e as Error).message || '失败',
-                        icon: 'none',
-                      })
-                    }
-                  }}
+              {authStore.isSuper || m.clubRole === 'member' ? (
+                <Text
+                  className='text-caption text-brand'
+                  onClick={() => changeStatus(m.userId, m.status)}
                 >
-                  <Text>{m.clubRole === 'manager' ? '撤销管理层' : '设为管理层'}</Text>
-                </View>
-              ) : p ? (
-                <Text className='metric-value text-brand'>{p.compositeScore}</Text>
+                  状态
+                </Text>
               ) : null}
             </View>
           )
         })}
-        <Text className='text-caption'>职责由产品负责人统一分配，成员无感进入对应视图</Text>
       </Card>
     </PageShell>
   )

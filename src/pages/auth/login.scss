@@ -1,68 +1,215 @@
-.login {
-  padding-top: 24rpx;
-  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
-}
+/* 登录页 —— 只消费 token 变量（DESIGN.md §2.1） */
 
-.login__hero {
-  padding: 64rpx 16rpx 40rpx;
-  text-align: center;
+.login {
+  min-height: 100vh;
+  background: var(--color-background);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 128rpx var(--space-page) 48rpx;
+  box-sizing: border-box;
 }
 
 .login__brand {
-  letter-spacing: -2rpx;
-}
-
-.login__tagline {
-  margin-top: 16rpx;
-  font-size: 30rpx;
-  font-weight: 500;
-  color: var(--color-foreground);
-}
-
-.login__hint {
-  margin-top: 12rpx;
-  line-height: 1.5;
-}
-
-.login__cta {
-  min-height: 96rpx;
-  font-size: 30rpx;
-}
-
-.login__list {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
-}
-
-.login__row {
-  display: flex;
   align-items: center;
-  gap: 20rpx;
-  min-height: 104rpx;
-  padding: 16rpx 8rpx;
-  border-radius: var(--radius-md);
-  border-bottom: var(--hairline) solid var(--color-border);
+  gap: 12rpx;
+  margin-bottom: 64rpx;
 }
 
-.login__row:last-child {
-  border-bottom: none;
-}
-
-.login__avatar {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: var(--radius-full);
-  background: var(--color-muted);
-  color: var(--color-brand);
+.login__logo {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 32rpx;
+  background: var(--color-logo);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28rpx;
+  box-shadow: var(--shadow-overlay);
+}
+
+.login__logo-text {
+  color: #fff;
+  font-size: 56rpx;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.login__name {
+  font-size: 44rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+  color: var(--color-foreground);
+}
+
+.login__slogan {
+  font-size: 24rpx;
+  color: var(--color-muted-foreground);
+}
+
+.login__panel {
+  width: 100%;
+  background: var(--color-card);
+  border: var(--hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 40rpx 32rpx;
+  box-sizing: border-box;
+  min-height: 420rpx;
+}
+
+.login__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+  padding: 96rpx 0;
+}
+
+.login__spinner {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  border: 5rpx solid var(--color-border);
+  border-top-color: var(--color-brand);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login__error,
+.login__pending {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 48rpx 8rpx;
+  align-items: flex-start;
+}
+
+.seg {
+  display: flex;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  padding: 6rpx;
+  margin-bottom: 32rpx;
+}
+
+.seg__item {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+  color: var(--color-muted-foreground);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.seg__item--on {
+  background: var(--color-card);
+  color: var(--color-foreground);
   font-weight: 600;
-  flex-shrink: 0;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.field__label {
+  font-size: 24rpx;
+  color: var(--color-muted-foreground);
+}
+
+.field__optional {
+  font-size: 20rpx;
+}
+
+.field__input {
+  height: var(--height-control);
+  line-height: var(--height-control);
+  background: var(--color-surface-2);
+  border: var(--hairline) solid var(--color-input);
+  border-radius: var(--radius-md);
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: var(--color-foreground);
+  box-sizing: border-box;
+}
+
+.field__input--code {
+  font-family: var(--font-mono);
+  letter-spacing: 12rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+.login__err {
+  display: block;
+  margin-top: 24rpx;
+  font-size: 24rpx;
+  color: var(--color-destructive);
 }
 
 .login__foot {
-  text-align: center;
+  margin-top: auto;
+  font-size: 20rpx;
+  color: var(--color-muted-foreground);
+  opacity: 0.7;
+}
+
+/* ===== 申请进度时间线（join-status 复用本页样式） ===== */
+.timeline-step {
+  display: flex;
+  gap: 20rpx;
+  align-items: flex-start;
+}
+
+.timeline-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  margin-top: 8rpx;
+  flex-shrink: 0;
+  background: var(--color-muted-foreground);
+  opacity: 0.4;
+}
+
+.timeline-dot--done {
+  background: var(--color-success);
+  opacity: 1;
+}
+
+.timeline-dot--active {
+  background: var(--color-brand);
+  opacity: 1;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.timeline-dot--danger {
+  background: var(--color-destructive);
+  opacity: 1;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(94, 106, 210, 0.35);
+  }
+
+  50% {
+    box-shadow: 0 0 0 12rpx rgba(94, 106, 210, 0);
+  }
+}
+
+.timeline-step__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  padding-bottom: 24rpx;
 }

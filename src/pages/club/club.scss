@@ -4,3 +4,74 @@
   padding-left: 12rpx;
   padding-right: 12rpx;
 }
+
+.club-stats {
+  display: flex;
+  margin-top: 24rpx;
+  gap: 32rpx;
+}
+
+.club-stats__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.club-stats__num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+.club-rank {
+  width: 48rpx;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--color-muted-foreground);
+}
+
+.ann-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 28rpx 0;
+  border-bottom: var(--hairline) solid var(--color-border);
+}
+
+.ann-card:last-child {
+  border-bottom: none;
+}
+
+.ann-body {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  margin-top: 16rpx;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx 0;
+  border-bottom: var(--hairline) solid var(--color-border);
+}
+
+.member-row:last-child {
+  border-bottom: none;
+}
+
+.avatar-dot {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: var(--color-surface-2);
+  border: var(--hairline) solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 28rpx;
+  color: var(--color-brand);
+  flex-shrink: 0;
+}

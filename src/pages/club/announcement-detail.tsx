@@ -1,47 +1,49 @@
 import { View, Text } from '@tarojs/components'
-import Taro, { useRouter } from '@tarojs/taro'
+import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, EmptyState } from '@/components/ui'
-import { teamStore } from '@/store'
+import { Skeleton } from '@/components/states'
+import * as clubService from '@/services/club'
+import { toast } from '@/utils/toast'
+import { ApiError } from '@/utils/request'
 import { formatDateTime } from '@/utils/format'
 import type { Announcement } from '@/types/domain'
+import './club.scss'
 
 function AnnouncementDetail() {
-  const router = useRouter()
   const [item, setItem] = useState<Announcement | null>(null)
+  const [loading, setLoading] = useState(true)
+  const id = Taro.getCurrentInstance().router?.params?.id || ''
 
   useEffect(() => {
-    const load = async () => {
-      if (teamStore.announcements.length === 0) await teamStore.loadAnnouncements()
-      const found = teamStore.announcements.find((a) => a.id === router.params.id)
-      setItem(found || null)
-    }
-    load()
-  }, [router.params.id])
-
-  if (!item) {
-    return (
-      <PageShell title='公告详情' showBack>
-        <EmptyState title='公告不存在' />
-      </PageShell>
-    )
-  }
+    clubService
+      .fetchAnnouncement(id)
+      .then(setItem)
+      .catch((e) => {
+        toast(e instanceof ApiError ? e.userMessage : '公告不存在')
+        setTimeout(() => Taro.navigateBack(), 800)
+      })
+      .finally(() => setLoading(false))
+  }, [id])
 
   return (
-    <PageShell title='公告' showBack>
-      <Card className='fade-in'>
-        <Text className='text-title'>{item.title}</Text>
-        <Text className='text-caption text-mono mt-8'>
-          {formatDateTime(item.publishedAt)} · {item.authorName || '管理员'}
-          {item.pinned ? ' · 置顶' : ''}
-        </Text>
-        <View className='hairline' />
-        <Text className='text-body' selectable>
-          {item.body}
-        </Text>
-      </Card>
+    <PageShell title='公告详情' showBack>
+      {loading ? (
+        <Skeleton rows={2} />
+      ) : item ? (
+        <View className='surface-card fade-in'>
+          <Text className='text-title'>
+            {item.pinned ? '📌 ' : ''}
+            {item.title}
+          </Text>
+          <Text className='text-caption' style={{ marginTop: '12rpx', display: 'block' }}>
+            {item.authorName || ''} · {formatDateTime(item.publishedAt || item.createdAt)}
+          </Text>
+          <View className='hairline' style={{ margin: '24rpx 0' }} />
+          <Text className='text-body ann-body'>{item.body}</Text>
+        </View>
+      ) : null}
     </PageShell>
   )
 }

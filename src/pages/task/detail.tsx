@@ -1,251 +1,261 @@
-import { View, Text, Textarea } from '@tarojs/components'
-import Taro, { useRouter } from '@tarojs/taro'
+import { View, Text } from '@tarojs/components'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, EmptyState } from '@/components/ui'
+import { Card, RoleBadge } from '@/components/ui'
+import { Skeleton } from '@/components/states'
 import { authStore, taskStore } from '@/store'
-import { ROUTES } from '@/constants'
-import {
-  TASK_CATEGORY_LABEL,
-  TASK_STATUS_LABEL,
-  type QualityGrade,
-  type Task,
-} from '@/types/domain'
+import * as taskService from '@/services/task'
+import { ApiError } from '@/utils/request'
+import { toast } from '@/utils/toast'
+import { formatDateTime } from '@/utils/format'
+import { TASK_CATEGORY_LABEL, TASK_STATUS_LABEL } from '@/types/domain'
+import type { QualityGrade, Task } from '@/types/domain'
 import './detail.scss'
 
-function statusBadgeClass(status: Task['status']) {
-  if (status === 'APPROVED') return 'badge badge--success'
-  if (status === 'OPEN') return 'badge badge--brand'
-  if (status === 'REJECTED') return 'badge badge--destructive'
-  return 'badge badge--warning'
-}
+function TaskDetail() {
+  const [task, setTask] = useState<Task | null>(null)
+  const [loading, setLoading] = useState(true)
+  const id = Taro.getCurrentInstance().router?.params?.id || ''
 
-function TaskDetailPage() {
-  const router = useRouter()
-  const id = String(router.params.id || '')
-  const uid = authStore.currentUserId
-  const task = taskStore.tasks.find((t) => t.id === id) || null
-  const [note, setNote] = useState('')
-  const [grade, setGrade] = useState<QualityGrade>('A')
-  const [reviewNote, setReviewNote] = useState('')
-  const [rejectReason, setRejectReason] = useState('')
+  const refresh = async () => {
+    try {
+      const t = await taskService.fetchTask(id)
+      setTask(t)
+    } catch (e) {
+      toast(e instanceof ApiError ? e.userMessage : '任务不存在')
+      setTimeout(() => Taro.navigateBack(), 800)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  useEffect(() => {
-    if (!authStore.isLoggedIn) {
-      Taro.reLaunch({ url: ROUTES.login })
+  useDidShow(() => {
+    void refresh()
+  })
+
+  if (loading || !task) {
+    return (
+      <PageShell title='任务详情' showBack>
+        <Skeleton rows={3} />
+      </PageShell>
+    )
+  }
+
+  const isMine = task.assigneeId === authStore.user?.id
+  const mgr = authStore.isManager
+  const canSubmit = isMine && (task.status === 'CLAIMED' || task.status === 'REJECTED')
+
+  const runAction = async (fn: Promise<unknown>, after?: () => void) => {
+    try {
+      await fn
+      await refresh()
+      await taskStore.refresh().catch(() => null)
+      after?.()
+    } catch {
+      /* taskStore.action 内部已 toast；服务直调失败提示 */
+    }
+  }
+
+  const onClaim = async () => {
+    const r = await Taro.showModal({ title: '认领任务', content: `确定认领「${task.title}」？` })
+    if (r.confirm) await runAction(taskStore.claim(task.id))
+  }
+
+  const onSubmit = async () => {
+    const r = await Taro.showModal({
+      title: '提交任务',
+      editable: true,
+      placeholderText: '交付说明（做了什么、产出在哪）',
+    })
+    if (r.confirm) {
+      const note = (r.content || '').trim()
+      if (!note) {
+        toast('请填写交付说明')
+        return
+      }
+      await runAction(taskStore.submit(task.id, note))
+    }
+  }
+
+  const onApprove = async () => {
+    const pick = await Taro.showActionSheet({
+      itemList: ['A · 优秀（90）', 'B · 良好（75）', 'C · 合格（60）', 'D · 待改进（40）'],
+    }).catch(() => null)
+    if (!pick) return
+    const grade = (['A', 'B', 'C', 'D'] as QualityGrade[])[pick.tapIndex]
+    const r = await Taro.showModal({
+      title: `验收通过 · ${grade}`,
+      editable: true,
+      placeholderText: '评语（可选）',
+    })
+    if (r.confirm) await runAction(taskStore.approve(task.id, grade, (r.content || '').trim()))
+  }
+
+  const onReject = async () => {
+    const r = await Taro.showModal({
+      title: '驳回任务',
+      editable: true,
+      placeholderText: '驳回理由（必填，指出问题与期望）',
+    })
+    if (!r.confirm) return
+    const reason = (r.content || '').trim()
+    if (!reason) {
+      toast('驳回必须填写理由')
       return
     }
-    taskStore.loadTasks()
-  }, [id])
+    await runAction(taskStore.reject(task.id, reason))
+  }
 
-  const isMine = task?.assigneeId === uid
-  const canReview = Boolean(authStore.isManager && task?.status === 'SUBMITTED')
+  const onArchive = async () => {
+    const r = await Taro.showModal({ title: '归档任务', content: '归档后不再计入进行中统计' })
+    if (r.confirm) await runAction(taskStore.archive(task.id))
+  }
 
   return (
     <PageShell title='任务详情' showBack>
-      {!task ? (
-        <EmptyState title='任务不存在或加载中' description='返回任务池看看其他任务' />
-      ) : (
-        <View className='stack-gap fade-in'>
-          <Card className='stack-gap'>
-            <View className='row-gap'>
-              <View className={statusBadgeClass(task.status)}>
-                <Text>{TASK_STATUS_LABEL[task.status]}</Text>
-              </View>
-              <View className='badge'>
-                <Text>{TASK_CATEGORY_LABEL[task.category]}</Text>
-              </View>
-              {task.repo ? (
-                <View className='badge'>
-                  <Text className='text-mono'>{task.repo}</Text>
-                </View>
-              ) : null}
+      <View className='stack-gap fade-in'>
+        <Card>
+          <Text className='text-title'>{task.title}</Text>
+          <View className='row-gap detail-tags'>
+            <View className='chip'>
+              <Text>{TASK_CATEGORY_LABEL[task.category] || task.category}</Text>
             </View>
-            <Text className='text-title'>{task.title}</Text>
-            <Text className='text-caption'>
-              {task.assigneeName
-                ? `认领人：${task.assigneeName}`
-                : '尚未认领 · 名册成员均可认领'}
-            </Text>
-          </Card>
+            {task.repo ? <Text className='text-caption text-mono'>@{task.repo}</Text> : null}
+            <View key={task.status} className={`badge badge--${tone(task.status)} rise-in`}>
+              <Text>{TASK_STATUS_LABEL[task.status]}</Text>
+            </View>
+          </View>
+        </Card>
 
-          <Card className='stack-gap'>
-            <Text className='section-label'>任务说明</Text>
-            <Text className='text-body detail__text'>{task.description}</Text>
-            {task.acceptanceCriteria ? (
-              <>
-                <Text className='section-label mt-16'>验收标准</Text>
-                <Text className='text-body detail__text'>{task.acceptanceCriteria}</Text>
-              </>
+        <Card>
+          <Text className='section-label'>任务描述</Text>
+          <Text className='text-body'>{task.description}</Text>
+        </Card>
+
+        {task.acceptanceCriteria ? (
+          <Card>
+            <Text className='section-label'>验收标准</Text>
+            <Text className='text-body'>{task.acceptanceCriteria}</Text>
+          </Card>
+        ) : null}
+
+        {/* 交付信息 */}
+        {task.submitNote || task.qualityGrade || task.rejectReason ? (
+          <Card>
+            <Text className='section-label'>交付记录</Text>
+            {task.submitNote ? (
+              <View className='detail-block'>
+                <Text className='text-caption'>交付说明</Text>
+                <Text className='text-body'>{task.submitNote}</Text>
+              </View>
+            ) : null}
+            {task.status === 'APPROVED' || task.status === 'DONE' ? (
+              <View className='detail-block'>
+                <Text className='text-caption'>
+                  验收：
+                  <Text className='text-success'>评级 {task.qualityGrade || '—'}</Text>
+                </Text>
+                {task.qualityNote ? <Text className='text-body'>{task.qualityNote}</Text> : null}
+              </View>
+            ) : null}
+            {task.status === 'REJECTED' ? (
+              <View className='detail-block detail-block--danger'>
+                <Text className='text-caption'>驳回原因</Text>
+                <Text className='text-body'>{task.rejectReason}</Text>
+              </View>
             ) : null}
           </Card>
+        ) : null}
 
-          {task.status === 'APPROVED' ? (
-            <Card className='stack-gap'>
-              <Text className='section-label'>验收结果</Text>
-              <View className='row-gap'>
-                <View className='badge badge--success'>
-                  <Text>质量 {task.qualityGrade}</Text>
-                </View>
-              </View>
-              <Text className='text-caption'>{task.qualityNote || '无评语'}</Text>
-            </Card>
-          ) : null}
+        {/* 状态时间线 */}
+        <Card>
+          <Text className='section-label'>流转记录</Text>
+          <Timeline name='发布' time={`${task.createdByName || ''} ${formatDateTime(task.createdAt)}`} />
+          {task.claimedAt ? <Timeline name='认领' time={formatDateTime(task.claimedAt)} /> : null}
+          {task.submittedAt ? <Timeline name='提交' time={formatDateTime(task.submittedAt)} /> : null}
+          {task.approvedAt ? <Timeline name='通过' time={formatDateTime(task.approvedAt)} /> : null}
+          {task.rejectedAt ? <Timeline name='驳回' time={formatDateTime(task.rejectedAt)} danger /> : null}
+          {task.status === 'DONE' ? <Timeline name='归档' time={formatDateTime(task.updatedAt)} /> : null}
+          {task.assigneeName ? (
+            <View className='row-between detail-assignee'>
+              <Text className='text-caption'>当前负责人</Text>
+              <Text className='text-card-title'>{task.assigneeName}</Text>
+            </View>
+          ) : (
+            <Text className='text-caption'>尚未有人认领</Text>
+          )}
+        </Card>
 
-          {task.status === 'CLAIMED' && task.rejectReason ? (
-            <Card className='stack-gap'>
-              <Text className='section-label text-destructive'>上次驳回原因</Text>
-              <Text className='text-body'>{task.rejectReason}</Text>
-            </Card>
-          ) : null}
-
-          {task.status === 'SUBMITTED' ? (
-            <Card className='stack-gap'>
-              <Text className='section-label'>交付说明</Text>
-              <Text className='text-body'>{task.submitNote || '（未填写）'}</Text>
-            </Card>
-          ) : null}
-
+        {/* 动作面（按状态与角色渲染；服务端仍是最终防线） */}
+        <View className='detail-actions'>
           {task.status === 'OPEN' ? (
-            <View
-              className='btn-primary'
-              onClick={() =>
-                Taro.showModal({
-                  title: '确认认领',
-                  content: '认领后请在 7 天内提交验收。',
-                  confirmText: '认领',
-                  success: async (res) => {
-                    if (!res.confirm || !uid) return
-                    try {
-                      await taskStore.claim(task.id, uid)
-                      Taro.showToast({ title: '已认领', icon: 'success' })
-                    } catch (e) {
-                      Taro.showToast({
-                        title: (e as Error).message || '认领失败',
-                        icon: 'none',
-                      })
-                    }
-                  },
-                })
-              }
-            >
-              <Text>一键认领</Text>
+            <View className='btn-primary pressable' onClick={onClaim}>
+              <Text>认领任务</Text>
             </View>
           ) : null}
-
-          {isMine && task.status === 'CLAIMED' ? (
-            <Card className='stack-gap'>
-              <Text className='section-label'>提交验收</Text>
-              <Textarea
-                className='detail__textarea'
-                value={note}
-                maxlength={200}
-                placeholder='交付链接 / 说明（简要即可）'
-                placeholderClass='text-muted'
-                onInput={(e) => setNote(String(e.detail.value))}
-              />
-              <View
-                className='btn-primary'
-                onClick={async () => {
-                  if (!note.trim()) {
-                    Taro.showToast({ title: '请填写交付说明', icon: 'none' })
-                    return
-                  }
-                  if (!uid) return
-                  try {
-                    await taskStore.submit(task.id, note.trim(), uid)
-                    Taro.showToast({ title: '已提交，等待验收', icon: 'success' })
-                    setNote('')
-                  } catch (e) {
-                    Taro.showToast({
-                      title: (e as Error).message || '提交失败',
-                      icon: 'none',
-                    })
-                  }
-                }}
-              >
-                <Text>提交验收</Text>
-              </View>
-            </Card>
-          ) : null}
-
-          {isMine && task.status === 'SUBMITTED' && !canReview ? (
-            <View className='btn-primary btn-primary--disabled'>
-              <Text>已提交，等待验收…</Text>
+          {canSubmit ? (
+            <View className='btn-primary pressable' onClick={onSubmit}>
+              <Text>{task.status === 'REJECTED' ? '修改后重新提交' : '提交验收'}</Text>
             </View>
           ) : null}
-
-          {canReview ? (
-            <Card className='stack-gap'>
-              <Text className='section-label'>管理员验收</Text>
-              <View className='row-gap'>
-                {(['A', 'B', 'C', 'D'] as QualityGrade[]).map((g) => (
-                  <View
-                    key={g}
-                    className={`badge ${grade === g ? 'badge--brand' : ''}`}
-                    onClick={() => setGrade(g)}
-                  >
-                    <Text>{g}</Text>
-                  </View>
-                ))}
+          {mgr && task.status === 'SUBMITTED' ? (
+            <View className='stack-gap'>
+              <View className='btn-primary pressable' onClick={onApprove}>
+                <Text>验收通过</Text>
               </View>
-              <Textarea
-                className='detail__textarea'
-                value={reviewNote}
-                maxlength={120}
-                placeholder='验收评语（一句即可）'
-                placeholderClass='text-muted'
-                onInput={(e) => setReviewNote(String(e.detail.value))}
-              />
-              <View
-                className='btn-primary'
-                onClick={async () => {
-                  try {
-                    await taskStore.approve(task.id, grade, reviewNote.trim())
-                    Taro.showToast({ title: '已通过', icon: 'success' })
-                    setReviewNote('')
-                  } catch (e) {
-                    Taro.showToast({
-                      title: (e as Error).message || '失败',
-                      icon: 'none',
-                    })
-                  }
-                }}
-              >
-                <Text>通过（{grade}）</Text>
+              <View className='btn-secondary btn-danger-text pressable' onClick={onReject}>
+                <Text>驳回</Text>
               </View>
-              <Textarea
-                className='detail__textarea'
-                value={rejectReason}
-                maxlength={120}
-                placeholder='驳回理由（驳回时必填）'
-                placeholderClass='text-muted'
-                onInput={(e) => setRejectReason(String(e.detail.value))}
-              />
-              <View
-                className='btn-secondary'
-                onClick={async () => {
-                  try {
-                    await taskStore.reject(task.id, rejectReason)
-                    Taro.showToast({ title: '已驳回，任务退回', icon: 'success' })
-                    setRejectReason('')
-                  } catch (e) {
-                    Taro.showToast({
-                      title: (e as Error).message || '失败',
-                      icon: 'none',
-                    })
-                  }
-                }}
-              >
-                <Text>驳回并退回</Text>
-              </View>
-            </Card>
+            </View>
+          ) : null}
+          {mgr && task.status === 'APPROVED' ? (
+            <View className='btn-secondary pressable' onClick={onArchive}>
+              <Text>归档</Text>
+            </View>
+          ) : null}
+          {authStore.clubRole && !isMine && task.status !== 'OPEN' ? (
+            <View className='row-between'>
+              <Text className='text-caption'>
+                {task.assigneeName ? `由 ${task.assigneeName} 负责` : ''}
+              </Text>
+              <RoleBadge role={authStore.clubRole} />
+            </View>
           ) : null}
         </View>
-      )}
+      </View>
     </PageShell>
   )
 }
 
-export default observer(TaskDetailPage)
+function Timeline({ name, time, danger }: { name: string; time: string; danger?: boolean }) {
+  return (
+    <View className='timeline-step'>
+      <View className={`timeline-dot ${danger ? 'timeline-dot--danger' : 'timeline-dot--done'}`} />
+      <View className='timeline-step__body'>
+        <Text className='text-card-title'>{name}</Text>
+        <Text className='text-caption'>{time}</Text>
+      </View>
+    </View>
+  )
+}
+
+function tone(status: Task['status']): string {
+  switch (status) {
+    case 'OPEN':
+    case 'SUBMITTED':
+      return 'brand'
+    case 'CLAIMED':
+      return 'warning'
+    case 'APPROVED':
+    case 'DONE':
+      return 'success'
+    case 'REJECTED':
+      return 'destructive'
+    default:
+      return ''
+  }
+}
+
+export default observer(TaskDetail)

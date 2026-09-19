@@ -1,73 +1,76 @@
+/**
+ * 领域类型 —— 与 rak-auth docs/API.md §6/§7 契约一一对应（camelCase）。
+ * 改字段必须先改 API.md（生态宪法 §2）。
+ */
+
 export type ClubRole = 'super_admin' | 'manager' | 'member'
 
 export type ThemeMode = 'light' | 'dark'
 
-export interface UserProfile {
+/** ===== 认证（API.md §6） ===== */
+export interface UserInfo {
   id: string
   displayName: string
-  email?: string | null
-  avatarUrl?: string | null
+  email: string | null
   status: 'ACTIVE' | 'DISABLED'
   duty?: string | null
 }
 
-export interface ClubInfo {
+export interface ClubBrief {
   id: string
   slug: string
   name: string
-  description?: string | null
-  logoUrl?: string | null
-}
-
-export interface ClubMember {
-  userId: string
-  displayName: string
-  duty?: string | null
-  avatarUrl?: string | null
   clubRole: ClubRole
-  status: 'ACTIVE' | 'LEFT' | 'DISABLED'
-  joinedAt: string
 }
 
-export interface Announcement {
-  id: string
-  title: string
-  body: string
-  pinned: boolean
-  publishedAt: string | null
-  authorId: string
-  authorName?: string
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+export interface LoginOutcome {
+  bound: boolean
+  accessToken?: string
+  expiresIn?: number
+  user?: UserInfo
+  club?: ClubBrief
 }
 
-export interface InviteCode {
-  id: string
-  code: string
-  maxUses: number
-  usedCount: number
-  expiresAt: string | null
-  revokedAt: string | null
-  qrPath: string
-}
-
-export interface MeResponse {
-  user: UserProfile
-  club: ClubInfo
-  clubRole: ClubRole
+export interface MeView {
+  user: UserInfo
+  club: ClubBrief
   permissions: string[]
 }
 
-export interface LoginResult {
-  bound: boolean
-  accessToken?: string
-  user?: UserProfile
-  club?: ClubInfo | null
-  clubRole?: ClubRole
-  permissions?: string[]
-  inviteRequired?: boolean
+export type JoinStatus = 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface JoinStatusView {
+  status: JoinStatus
+  reviewedAt: string | null
+  clubName: string | null
 }
 
-/** ===== 任务池 ===== */
+/** ===== 社团（API.md §7.6） ===== */
+export interface ClubInfo {
+  id: string
+  tenantId: string
+  slug: string
+  name: string
+  logoUrl: string | null
+  description: string | null
+  settingsJson: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ClubMember {
+  id: string
+  clubId: string
+  userId: string
+  clubRole: ClubRole
+  displayName: string | null
+  duty: string | null
+  status: 'ACTIVE' | 'LEFT' | 'DISABLED'
+  joinedAt: string
+  updatedAt: string
+}
+
+/** ===== 任务池（API.md §7.1/§7.2） ===== */
 export type TaskStatus =
   | 'OPEN'
   | 'CLAIMED'
@@ -95,31 +98,42 @@ export const QUALITY_SCORE: Record<QualityGrade, number> = {
 
 export interface Task {
   id: string
+  clubId: string
   title: string
   description: string
   category: TaskCategory
-  repo?: string | null
-  acceptanceCriteria?: string | null
+  repo: string | null
+  acceptanceCriteria: string | null
   status: TaskStatus
   assigneeId: string | null
-  assigneeName?: string | null
+  assigneeName: string | null
   claimedAt: string | null
   submittedAt: string | null
-  submitNote?: string | null
+  submitNote: string | null
   approvedAt: string | null
-  qualityGrade?: QualityGrade | null
-  qualityNote?: string | null
+  qualityGrade: QualityGrade | null
+  qualityNote: string | null
   rejectedAt: string | null
-  rejectReason?: string | null
+  rejectReason: string | null
   createdBy: string
+  createdByName: string | null
   createdAt: string
   updatedAt: string
 }
 
+export interface TaskQuery {
+  status?: string // 逗号分隔多值
+  category?: string
+  keyword?: string
+  assigneeId?: string
+  page?: number
+  size?: number
+}
+
 export interface MemberPerformance {
   userId: string
-  displayName: string
-  duty?: string | null
+  displayName: string | null
+  duty: string | null
   role: ClubRole
   claimedCount: number
   approvedCount: number
@@ -130,15 +144,102 @@ export interface MemberPerformance {
   compositeScore: number
 }
 
+/** ===== ROI（API.md §7.3） ===== */
+export type RoiCategory = 'activity' | 'project' | 'other'
+export type RoiStatus = 'PLANNING' | 'ACTIVE' | 'DONE' | 'CANCELLED'
+
+export interface RoiItem {
+  id: string
+  clubId: string
+  title: string
+  category: RoiCategory
+  cost: number
+  revenue: number
+  participants: number
+  periodStart: string | null
+  periodEnd: string | null
+  status: RoiStatus
+  notes: string | null
+  roiRatio: number | null
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RoiInput {
+  title: string
+  category: RoiCategory
+  cost: number
+  revenue: number
+  participants?: number
+  periodStart?: string | null
+  periodEnd?: string | null
+  status?: RoiStatus
+  notes?: string | null
+}
+
+export type RoiPeriod = 'month' | 'quarter' | 'year' | 'all'
+
+export interface RoiOverview {
+  period: RoiPeriod
+  totalCost: number
+  totalRevenue: number
+  net: number
+  roiRatio: number | null
+  itemCount: number
+  series: { label: string; cost: number; revenue: number }[]
+}
+
+/** ===== 公告（API.md §7.4） ===== */
+export interface Announcement {
+  id: string
+  clubId: string
+  title: string
+  body: string
+  pinned: boolean
+  authorId: string
+  authorName: string | null
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+  publishedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** ===== 邀请码（API.md §7.6） ===== */
+export interface InviteCode {
+  id: string
+  clubId: string
+  code: string
+  createdBy: string
+  maxUses: number
+  usedCount: number
+  expiresAt: string | null
+  revokedAt: string | null
+  createdAt: string
+}
+
+/** ===== 入队申请（API.md §7.5） ===== */
 export interface JoinRequest {
   id: string
+  clubId: string
   applicantName: string
   applicantWechat: string
   reason: string
+  appid: string
+  openid: string
+  userId: string | null
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
-  createdAt: string
-  reviewedAt: string | null
   reviewedBy: string | null
+  reviewedAt: string | null
+  createdAt: string
+}
+
+/** ===== 分页（API.md §7 通用约定） ===== */
+export interface Paged<T> {
+  items: T[]
+  page: number
+  size: number
+  total: number
 }
 
 export const TASK_CATEGORY_LABEL: Record<TaskCategory, string> = {
@@ -159,9 +260,24 @@ export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
   DONE: '已归档',
 }
 
-export const REPO_OPTIONS = [
-  'rak-runtime',
-  'rak-flowmind',
-  'cross-dashboard',
-  'Xra-space',
-] as const
+export const ROI_CATEGORY_LABEL: Record<RoiCategory, string> = {
+  activity: '活动',
+  project: '项目',
+  other: '其他',
+}
+
+export const ROI_STATUS_LABEL: Record<RoiStatus, string> = {
+  PLANNING: '规划中',
+  ACTIVE: '进行中',
+  DONE: '已完成',
+  CANCELLED: '已取消',
+}
+
+/** API ProblemDetail（RFC7807 + code，契约 §2） */
+export interface ProblemDetail {
+  type?: string
+  title?: string
+  status: number
+  detail?: string
+  code?: string
+}

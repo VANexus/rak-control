@@ -1,59 +1,106 @@
-import { View, Text, Input } from '@tarojs/components'
+import { View, Text, Input, Textarea, Switch } from '@tarojs/components'
+import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import PageShell from '@/components/page-shell'
 import { Card } from '@/components/ui'
+import { Skeleton } from '@/components/states'
+import * as clubService from '@/services/club'
 import { authStore } from '@/store'
-import { updateClub } from '@/services/club'
 import { toast } from '@/utils/toast'
+import { ApiError } from '@/utils/request'
+import type { ClubInfo } from '@/types/domain'
+import '../../admin.scss'
 
 function ClubSettings() {
-  const [name, setName] = useState(authStore.club?.name || '')
-  const [description, setDescription] = useState(
-    authStore.club?.description || ''
-  )
+  const [club, setClub] = useState<ClubInfo | null>(null)
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [dirVisible, setDirVisible] = useState(true)
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    if (authStore.club) {
-      setName(authStore.club.name)
-      setDescription(authStore.club.description || '')
+    clubService
+      .fetchClub()
+      .then((c) => {
+        setClub(c)
+        setName(c.name)
+        setDescription(c.description || '')
+        try {
+          const s = JSON.parse(c.settingsJson || '{}')
+          setDirVisible(s.memberDirectoryVisible !== false)
+        } catch {
+          /* 默认 true */
+        }
+      })
+      .catch((e) => toast(e instanceof ApiError ? e.userMessage : '加载设置失败'))
+  }, [])
+
+  const save = async () => {
+    if (!club || !name.trim()) {
+      toast('名称必填')
+      return
     }
-  }, [authStore.club?.name, authStore.club?.description])
+    setBusy(true)
+    try {
+      await clubService.updateClub({
+        name: name.trim(),
+        description: description.trim(),
+        settings: { memberDirectoryVisible: dirVisible },
+      })
+      toast('已保存', 'success')
+      void authStore.refreshMe()
+    } catch (e) {
+      toast(e instanceof ApiError ? e.userMessage : '保存失败')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (!club) {
+    return (
+      <PageShell title='团队设置' showBack requireRole='manage'>
+        <Skeleton rows={2} />
+      </PageShell>
+    )
+  }
 
   return (
     <PageShell title='团队设置' showBack requireRole='manage'>
-      <Card className='stack-gap fade-in'>
-        <Text className='section-label'>团队名称</Text>
-        <Input
-          className='form__input'
-          value={name}
-          maxlength={30}
-          onInput={(e) => setName(String(e.detail.value))}
-        />
-        <Text className='section-label'>简介</Text>
-        <Input
-          className='form__input'
-          value={description}
-          maxlength={60}
-          onInput={(e) => setDescription(String(e.detail.value))}
-        />
-        <View
-          className='btn-primary'
-          onClick={async () => {
-            try {
-              const next = await updateClub({
-                name: name.trim(),
-                description: description.trim(),
-              })
-              await authStore.refreshMe()
-              void next
-              toast('已保存', 'success')
-            } catch (e) {
-              toast((e as Error).message || '保存失败')
-            }
-          }}
-        >
-          <Text>保存</Text>
+      <Card className='fade-in'>
+        <View className='admin-form'>
+          <View className='admin-field'>
+            <Text className='admin-field__label'>团队名称</Text>
+            <Input
+              className='admin-input'
+              value={name}
+              maxlength={32}
+              onInput={(e) => setName(e.detail.value)}
+            />
+          </View>
+          <View className='admin-field'>
+            <Text className='admin-field__label'>简介</Text>
+            <Textarea
+              className='admin-textarea'
+              style={{ minHeight: '140rpx' }}
+              value={description}
+              maxlength={200}
+              onInput={(e) => setDescription(e.detail.value)}
+            />
+          </View>
+          <View className='row-between'>
+            <View>
+              <Text className='admin-field__label'>成员目录对全员可见</Text>
+              <Text className='text-caption'>关闭后仅管理层可见成员列表</Text>
+            </View>
+            <Switch checked={dirVisible} onChange={(e) => setDirVisible(!!e.detail.value)} />
+          </View>
+          <View
+            className={`btn-primary pressable ${busy ? 'btn-primary--disabled' : ''}`}
+            onClick={busy ? undefined : save}
+          >
+            <Text>{busy ? '保存中…' : '保存设置'}</Text>
+          </View>
         </View>
       </Card>
     </PageShell>

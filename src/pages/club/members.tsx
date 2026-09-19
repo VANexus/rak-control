@@ -1,61 +1,59 @@
 import { View, Text } from '@tarojs/components'
+import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, EmptyState, RoleBadge } from '@/components/ui'
+import { RoleBadge } from '@/components/ui'
+import { Skeleton } from '@/components/states'
 import { authStore, teamStore } from '@/store'
-import { OWNER_USER_ID } from '@/constants'
-import { formatRoiRatio } from '@/utils/format'
+import { formatDate } from '@/utils/format'
+import './club.scss'
 
 function Members() {
-  const uid = authStore.currentUserId
-  const canSeeAll = authStore.isManager
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    teamStore.loadMembers()
-    teamStore.loadPerformance()
-  }, [])
+  useDidShow(() => {
+    teamStore.loadMembers().finally(() => setLoading(false))
+  })
 
-  const perfMap = new Map(teamStore.allPerformance.map((p) => [p.userId, p]))
-  const roster = teamStore.members.filter((m) => m.userId !== OWNER_USER_ID)
+  usePullDownRefresh(async () => {
+    await teamStore.loadMembers()
+    Taro.stopPullDownRefresh()
+  })
+
+  const active = teamStore.members.filter((m) => m.status === 'ACTIVE')
 
   return (
-    <PageShell title='成员目录' showBack>
-      {roster.length === 0 ? (
-        <EmptyState title='暂无成员' />
+    <PageShell title='成员目录' showBack subtitle={`${active.length} 人`}>
+      {loading ? (
+        <Skeleton rows={4} />
       ) : (
-        <Card className='fade-in'>
-          {roster.map((m) => {
-            const p = perfMap.get(m.userId)
-            const isMe = m.userId === uid
-            const showDetail = canSeeAll || isMe
+        <View className='surface-card fade-in'>
+          {active.map((m) => {
+            const isMe = m.userId === authStore.user?.id
+            const name = m.displayName || '成员'
             return (
-              <View key={m.userId} className='list-row'>
+              <View key={m.id} className='member-row'>
+                <View className='avatar-dot'>
+                  <Text>{name.slice(0, 1)}</Text>
+                </View>
                 <View className='flex-1'>
                   <View className='row-gap'>
                     <Text className='text-card-title'>
-                      {showDetail ? m.displayName : `成员 ${m.userId.toUpperCase()}`}
+                      {name}
+                      {isMe ? '（我）' : ''}
                     </Text>
-                    {showDetail ? <RoleBadge role={m.clubRole} /> : null}
+                    <RoleBadge role={m.clubRole} />
                   </View>
                   <Text className='text-caption'>
-                    {showDetail ? m.duty || '—' : '—'}
-                    {p
-                      ? showDetail
-                        ? ` · 认领 ${p.claimedCount} / 通过 ${p.approvedCount}`
-                        : ` · 完成率 ${formatRoiRatio(p.completionRate)}`
-                      : ''}
+                    {m.duty || '成员'} · 入队 {formatDate(m.joinedAt)}
                   </Text>
                 </View>
-                {showDetail && p ? (
-                  <Text className='metric-value text-brand'>{p.compositeScore}</Text>
-                ) : (
-                  <Text className='text-caption'>—</Text>
-                )}
               </View>
             )
           })}
-        </Card>
+          {active.length === 0 ? <Text className='text-caption'>暂无成员</Text> : null}
+        </View>
       )}
     </PageShell>
   )

@@ -2,15 +2,20 @@ export default defineAppConfig({
   pages: [
     'pages/auth/login',
     'pages/index/index',
+    'pages/task/pool',
+    'pages/task/detail',
+    'pages/roi/overview',
+    'pages/roi/list',
+    'pages/roi/detail',
     'pages/club/home',
-    'pages/my/tasks',
-    'pages/me/profile',
-    'pages/me/settings',
     'pages/club/announcement-list',
     'pages/club/announcement-detail',
     'pages/club/members',
-    'pages/task/detail',
-    'pages/task/join',
+    'pages/me/profile',
+    'pages/me/tasks',
+    'pages/me/performance',
+    'pages/me/settings',
+    'pages/auth/join-status',
   ],
   subPackages: [
     {
@@ -19,6 +24,7 @@ export default defineAppConfig({
         'pages/admin/home',
         'pages/admin/task-publish',
         'pages/admin/review',
+        'pages/admin/roi-edit',
         'pages/admin/members',
         'pages/admin/join-requests',
         'pages/admin/invites',
@@ -42,6 +48,7 @@ export default defineAppConfig({
     backgroundColor: '#ffffff',
   },
   tabBar: {
+    custom: false,
     color: '#737373',
     selectedColor: '#5E6AD2',
     backgroundColor: '#ffffff',
@@ -49,9 +56,21 @@ export default defineAppConfig({
     list: [
       {
         pagePath: 'pages/index/index',
-        text: '任务',
+        text: '首页',
         iconPath: 'assets/tabbar/home.png',
         selectedIconPath: 'assets/tabbar/home-active.png',
+      },
+      {
+        pagePath: 'pages/task/pool',
+        text: '任务',
+        iconPath: 'assets/tabbar/task.png',
+        selectedIconPath: 'assets/tabbar/task-active.png',
+      },
+      {
+        pagePath: 'pages/roi/overview',
+        text: 'ROI',
+        iconPath: 'assets/tabbar/roi.png',
+        selectedIconPath: 'assets/tabbar/roi-active.png',
       },
       {
         pagePath: 'pages/club/home',
@@ -62,12 +81,6 @@ export default defineAppConfig({
       {
         pagePath: 'pages/me/profile',
         text: '我的',
-        iconPath: 'assets/tabbar/roi.png',
-        selectedIconPath: 'assets/tabbar/roi-active.png',
-      },
-      {
-        pagePath: 'pages/my/tasks',
-        text: '任务进度',
         iconPath: 'assets/tabbar/me.png',
         selectedIconPath: 'assets/tabbar/me-active.png',
       },

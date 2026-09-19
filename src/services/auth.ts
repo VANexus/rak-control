@@ -1,106 +1,81 @@
-import {
-  getClub,
-  getCurrentUserId,
-  getMembers,
-  setCurrentUserId,
-  ensureSeeded,
-} from '@/services/local-db'
-import { OWNER_USER_ID } from '@/constants'
-import type { ClubInfo, ClubMember, ClubRole } from '@/types/domain'
+import Taro from '@tarojs/taro'
+import { WECHAT_UI_BASE } from '@/constants'
+import { request, setToken } from '@/utils/request'
+import type { JoinStatusView, LoginOutcome, MeView } from '@/types/domain'
 
-// TODO(rak-auth 接入后)：
-//   把本文件所有函数体替换为 request({ url: '/api/v1/...', ... })
-//   local-db.ts 仅作为离线缓存层，不再是真源。
-//   字段名与 API.md 保持一致。
-
-export async function fetchMe(): Promise<{
-  user: { id: string; displayName: string; status: 'ACTIVE' }
-  club: ClubInfo
-  clubRole: ClubRole
-  permissions: string[]
-  duty?: string | null
-}> {
-  ensureSeeded()
-  const id = getCurrentUserId()
-  if (!id) {
-    throw new Error('未登录')
-  }
-  const members = getMembers()
-  const me = members.find((m) => m.userId === id)
-  if (!me) {
-    throw new Error('身份不存在，请重新选择')
-  }
-  return {
-    user: { id: me.userId, displayName: me.displayName, status: 'ACTIVE' },
-    club: getClub(),
-    clubRole: me.clubRole,
-    permissions: permissionsFor(me.clubRole),
-    duty: me.duty || null,
-  }
+/** 微信静默登录（API.md §6.1）：成功即持有 token 并返回身份摘要 */
+export async function wxLogin(): Promise<LoginOutcome> {
+  const { code } = await Taro.login()
+  const out = await request<LoginOutcome>({
+    url: `${WECHAT_UI_BASE}/login`,
+    method: 'POST',
+    data: { code },
+    auth: false,
+  })
+  if (out.bound && out.accessToken) setToken(out.accessToken)
+  else if (!out.bound) setToken('')
+  return out
 }
 
-export function permissionsFor(role: ClubRole): string[] {
-  if (role === 'member') {
-    return ['task:read', 'task:claim', 'task:submit', 'performance:self']
-  }
-  if (role === 'manager') {
-    return [
-      'task:read',
-      'task:claim',
-      'task:submit',
-      'task:publish',
-      'task:review',
-      'member:read',
-      'performance:all',
-      'join:read',
-    ]
-  }
-  return [
-    'task:read',
-    'task:claim',
-    'task:submit',
-    'task:publish',
-    'task:review',
-    'member:read',
-    'member:write',
-    'performance:all',
-    'join:read',
-    'join:write',
-    'club:admin',
-  ]
+/** 邀请码/扫码绑定入驻（§6.2） */
+export async function bind(
+  inviteCode: string,
+  displayName?: string
+): Promise<LoginOutcome> {
+  const { code } = await Taro.login()
+  const out = await request<LoginOutcome>({
+    url: `${WECHAT_UI_BASE}/bind`,
+    method: 'POST',
+    data: { code, inviteCode, displayName: displayName || undefined },
+    auth: false,
+  })
+  if (out.bound && out.accessToken) setToken(out.accessToken)
+  return out
 }
 
-/** 过渡期：本地选择身份后登录成功 */
-export async function loginAs(userId: string): Promise<{
-  user: { id: string; displayName: string; status: 'ACTIVE' }
-  club: ClubInfo
-  clubRole: ClubRole
-  permissions: string[]
-  duty?: string | null
-}> {
-  ensureSeeded()
-  const members = getMembers()
-  const me = members.find((m) => m.userId === userId)
-  if (!me) {
-    throw new Error('请选择有效身份')
-  }
-  setCurrentUserId(userId)
-  return fetchMe()
+/** 提交入队申请（§6.3 无码通道） */
+export async function submitJoinRequest(input: {
+  name: string
+  wechat: string
+  reason: string
+}): Promise<{ id: string; status: string }> {
+  const { code } = await Taro.login()
+  return request({
+    url: `${WECHAT_UI_BASE}/join-request`,
+    method: 'POST',
+    data: {
+      code,
+      applicantName: input.name,
+      applicantWechat: input.wechat,
+      reason: input.reason,
+    },
+    auth: false,
+  })
 }
 
+/** 本人申请进度（§6.3） */
+export async function fetchJoinStatus(): Promise<JoinStatusView> {
+  const { code } = await Taro.login()
+  return request<JoinStatusView>({
+    url: `${WECHAT_UI_BASE}/join-request`,
+    method: 'GET',
+    data: { code },
+    auth: false,
+  })
+}
+
+/** 当前身份与权限（§6.4） */
+export async function fetchMe(): Promise<MeView> {
+  return request<MeView>({ url: `${WECHAT_UI_BASE}/me` })
+}
+
+/** 登出：吊销 JWT（尽力），必清本地 token */
 export async function logout(): Promise<void> {
-  setCurrentUserId(null)
-}
-
-export async function fetchMembers(): Promise<ClubMember[]> {
-  return getMembers()
-}
-
-export function isOwner(userId?: string | null) {
-  return userId === OWNER_USER_ID
-}
-
-export function findMember(userId: string | null | undefined): ClubMember | null {
-  if (!userId) return null
-  return getMembers().find((m) => m.userId === userId) || null
+  try {
+    await request({ url: '/auth/logout', method: 'POST' })
+  } catch {
+    /* 尽力而为 */
+  } finally {
+    setToken('')
+  }
 }

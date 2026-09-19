@@ -3,7 +3,6 @@ import { observer } from 'mobx-react-lite'
 import PageShell from '@/components/page-shell'
 import { Card } from '@/components/ui'
 import { authStore, uiStore } from '@/store'
-import { TEAM_NAME } from '@/constants'
 import { toast } from '@/utils/toast'
 
 function Settings() {
@@ -24,7 +23,9 @@ function Settings() {
         </View>
         <View className='list-row'>
           <Text className='text-card-title'>关于</Text>
-          <Text className='text-caption'>{TEAM_NAME} · 任务考核</Text>
+          <Text className='text-caption'>
+            Rak · {authStore.club?.name || '团队'} · 任务与 ROI
+          </Text>
         </View>
         <View className='list-row'>
           <Text className='text-card-title'>设计基准</Text>

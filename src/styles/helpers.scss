@@ -315,3 +315,62 @@
 .stagger-in > .stagger-item:nth-child(5) {
   animation-delay: 240ms;
 }
+
+/* ===== 通用补充（本轮升级新增） ===== */
+.flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+.mt-8 {
+  margin-top: 8rpx;
+}
+
+/* 分段器（任务池/ROI 列表/管理端共用） */
+.pool-seg {
+  display: flex;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  padding: 6rpx;
+  margin-bottom: 20rpx;
+}
+
+.pool-seg__item {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  color: var(--color-muted-foreground);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.pool-seg__item--on {
+  background: var(--color-card);
+  color: var(--color-foreground);
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.pool-more {
+  display: block;
+  text-align: center;
+  padding: 32rpx 0;
+  font-size: 22rpx;
+  color: var(--color-muted-foreground);
+}
+
+.home-badge-dot {
+  min-width: 44rpx;
+  height: 44rpx;
+  padding: 0 12rpx;
+  border-radius: var(--radius-full);
+  background: var(--color-destructive);
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}

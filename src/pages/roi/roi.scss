@@ -1,0 +1,87 @@
+/* ROI 模块共享样式（overview/list/detail 三页共用） */
+
+.roi-periods {
+  display: flex;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  padding: 6rpx;
+}
+
+.roi-periods__item {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  color: var(--color-muted-foreground);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.roi-periods__item--on {
+  background: var(--color-card);
+  color: var(--color-foreground);
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.roi-legend {
+  display: flex;
+  gap: 32rpx;
+  margin-top: 16rpx;
+}
+
+.roi-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 24rpx 0;
+  border-bottom: var(--hairline) solid var(--color-border);
+}
+
+.roi-row:last-child {
+  border-bottom: none;
+}
+
+.roi-row__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.roi-row__amounts {
+  display: flex;
+  gap: 32rpx;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 24rpx;
+  color: var(--color-muted-foreground);
+}
+
+.roi-detail-field {
+  display: flex;
+  justify-content: space-between;
+  padding: 16rpx 0;
+  border-bottom: var(--hairline) solid var(--color-border);
+  font-size: 26rpx;
+}
+
+.roi-detail-field:last-child {
+  border-bottom: none;
+}
+
+.roi-split {
+  height: 20rpx;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  display: flex;
+  margin: 8rpx 0 24rpx;
+}
+
+.roi-split__cost {
+  background: var(--color-chart-3);
+}
+
+.roi-split__rev {
+  background: var(--color-chart-2);
+}

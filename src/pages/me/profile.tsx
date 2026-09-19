@@ -1,130 +1,152 @@
-import { View } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import { View, Text } from '@tarojs/components'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, MetricCard, RoleBadge } from '@/components/ui'
+import { RoleBadge } from '@/components/ui'
 import { authStore, taskStore, uiStore } from '@/store'
+import * as taskService from '@/services/task'
 import { ROUTES } from '@/constants'
-import { formatRoiRatio } from '@/utils/format'
 import { roleLabel } from '@/utils/permission'
+import { canManage, isSuper } from '@/utils/permission'
+import './me.scss'
 
 function Profile() {
-  const uid = authStore.currentUserId
+  const [myCount, setMyCount] = useState<{ active: number; review: number } | null>(null)
+  const uid = authStore.user?.id
 
-  useEffect(() => {
+  useDidShow(() => {
+    if (authStore.status === 'LOADING') return
     if (!authStore.isLoggedIn) {
       Taro.reLaunch({ url: ROUTES.login })
       return
     }
-    taskStore.loadTasks()
-    taskStore.loadMyPerformance(uid)
-    authStore.refreshMe()
-  }, [uid])
+    uiStore.syncTabBarStyle()
+    void (async () => {
+      try {
+        const [active, review] = await Promise.all([
+          taskService.fetchTasks({ assigneeId: uid, status: 'CLAIMED,REJECTED', size: 1 }),
+          taskService.fetchTasks({ assigneeId: uid, status: 'SUBMITTED', size: 1 }),
+        ])
+        setMyCount({ active: active.total, review: review.total })
+      } catch {
+        setMyCount(null)
+      }
+    })()
+  })
 
-  const p = taskStore.myPerformance
-  const approvedList = taskStore.myTasks(uid).filter((t) => t.status === 'APPROVED')
-  const initial = (authStore.displayName || 'R').slice(0, 1)
+  const name = authStore.user?.displayName || '成员'
 
   return (
-    <PageShell title='我的' subtitle={roleLabel(authStore.clubRole)}>
+    <PageShell title='我的' subtitle={authStore.club?.name || ''}>
       <View className='stack-gap fade-in'>
-        <Card>
-          <View className='row-gap'>
-            <View className='profile__avatar'>
-              <View className='profile__avatar-text'>{initial}</View>
-            </View>
-            <View className='flex-1'>
-              <View className='row-gap'>
-                <View className='text-title'>
-                  {authStore.displayName || '未登录'}
-                </View>
-                <RoleBadge role={authStore.clubRole} />
-              </View>
-              <View className='text-caption'>
-                {authStore.duty || '—'} · {authStore.club?.name || ''}
-              </View>
-            </View>
+        {/* 个人卡 */}
+        <View className='surface-card me-hero pressable' onClick={() => Taro.navigateTo({ url: ROUTES.myPerformance })}>
+          <View className='avatar-dot avatar-dot--lg'>
+            <Text>{name.slice(0, 1)}</Text>
           </View>
-        </Card>
-
-        <View className='metric-grid'>
-          <MetricCard label='已认领' value={String(p?.claimedCount ?? 0)} />
-          <MetricCard label='已通过' value={String(p?.approvedCount ?? 0)} tone='success' />
-          <MetricCard label='完成率' value={formatRoiRatio(p?.completionRate ?? 0)} tone='brand' />
-          <MetricCard label='综合分' value={String(p?.compositeScore ?? 0)} tone='brand' />
+          <View className='flex-1'>
+            <View className='row-gap'>
+              <Text className='text-title'>{name}</Text>
+              <RoleBadge role={authStore.clubRole} />
+            </View>
+            <Text className='text-caption'>
+              {authStore.user?.duty || roleLabel(authStore.clubRole)}
+            </Text>
+          </View>
+          <Text className='text-caption'>›</Text>
         </View>
 
-        <View>
-          <View className='section-label'>质量分明细</View>
-          {approvedList.length === 0 ? (
-            <Card>
-              <View className='text-caption'>
-                还没有已验收任务，综合分与完成率按 0 计。完成后会在这里列出评语。
-              </View>
-            </Card>
-          ) : (
-            <Card className='stack-gap'>
-              {approvedList.map((t) => (
-                <View
-                  key={t.id}
-                  className='list-row list-row--pressable'
-                  onClick={() =>
-                    Taro.navigateTo({ url: `${ROUTES.taskDetail}?id=${t.id}` })
-                  }
-                >
-                  <View className='flex-1'>
-                    <View className='text-card-title'>{t.title}</View>
-                    <View className='text-caption'>{t.qualityNote || '无评语'}</View>
-                  </View>
-                  <View className='badge badge--success'>
-                    <View>{t.qualityGrade || '—'}</View>
-                  </View>
-                </View>
-              ))}
-            </Card>
-          )}
-        </View>
-
-        <Card className='stack-gap'>
+        {/* 任务速览 */}
+        <View className='me-counts'>
           <View
-            className='list-row list-row--pressable'
+            className='me-counts__item pressable'
             onClick={() => Taro.navigateTo({ url: ROUTES.myTasks })}
           >
-            <View className='text-card-title'>任务进度</View>
-            <View className='text-caption'>进行中 / 待验收 / 已完成</View>
+            <Text className='club-stats__num'>{myCount ? myCount.active : '—'}</Text>
+            <Text className='text-caption'>进行中</Text>
           </View>
           <View
-            className='list-row list-row--pressable'
-            onClick={() => Taro.navigateTo({ url: ROUTES.settings })}
+            className='me-counts__item pressable'
+            onClick={() => Taro.navigateTo({ url: `${ROUTES.myTasks}?seg=review` })}
           >
-            <View className='text-card-title'>设置</View>
-            <View className='text-caption'>
-              主题 {uiStore.theme === 'light' ? '浅色' : '深色'}
-            </View>
+            <Text className='club-stats__num'>{myCount ? myCount.review : '—'}</Text>
+            <Text className='text-caption'>待验收</Text>
           </View>
-          {authStore.isManager ? (
-            <View
-              className='list-row list-row--pressable'
+          <View
+            className='me-counts__item pressable'
+            onClick={() => Taro.navigateTo({ url: ROUTES.myPerformance })}
+          >
+            <Text className='club-stats__num text-brand'>绩效</Text>
+            <Text className='text-caption'>我的考核</Text>
+          </View>
+        </View>
+
+        {/* 入口组 */}
+        <View className='surface-card'>
+          <MeRow title='我的任务' onClick={() => Taro.navigateTo({ url: ROUTES.myTasks })} />
+          <MeRow title='成员目录' onClick={() => Taro.navigateTo({ url: ROUTES.members })} />
+          {canManage(authStore.clubRole) ? (
+            <MeRow
+              title='管理面板'
+              hint='任务发布 · 验收 · ROI · 公告'
+              brand
               onClick={() => Taro.navigateTo({ url: ROUTES.adminHome })}
-            >
-              <View className='text-card-title text-brand'>管理面板</View>
-              <View className='text-caption'>发布 / 验收 / 名册</View>
-            </View>
+            />
           ) : null}
-          {authStore.isSuper ? (
-            <View
-              className='list-row list-row--pressable'
+          {isSuper(authStore.clubRole) ? (
+            <MeRow
+              title='超级后台'
+              hint='任免 · 全量视图'
+              brand
               onClick={() => Taro.navigateTo({ url: ROUTES.superRoles })}
-            >
-              <View className='text-card-title text-brand'>超级后台</View>
-              <View className='text-caption'>职责分配</View>
-            </View>
+            />
           ) : null}
-        </Card>
+          <MeRow
+            title={uiStore.theme === 'dark' ? '切换到浅色' : '切换到深色'}
+            onClick={() => uiStore.toggleTheme()}
+          />
+          <MeRow title='设置' onClick={() => Taro.navigateTo({ url: ROUTES.settings })} />
+        </View>
+
+        <View
+          className='btn-secondary pressable'
+          onClick={() => {
+            Taro.showModal({ title: '退出登录', content: '确定退出 Rak？' }).then((r) => {
+              if (r.confirm) void authStore.logout()
+            })
+          }}
+        >
+          <Text>退出登录</Text>
+        </View>
       </View>
     </PageShell>
   )
 }
+
+function MeRow({
+  title,
+  hint,
+  brand,
+  onClick,
+}: {
+  title: string
+  hint?: string
+  brand?: boolean
+  onClick: () => void
+}) {
+  return (
+    <View className='list-row list-row--pressable' onClick={onClick}>
+      <View className='flex-1'>
+        <Text className={`text-card-title ${brand ? 'text-brand' : ''}`}>{title}</Text>
+        {hint ? <Text className='text-caption'>{hint}</Text> : null}
+      </View>
+      <Text className='text-caption'>›</Text>
+    </View>
+  )
+}
+
+// 让 observer 追踪任务数（taskStore 引用防止 tree-shake 误删依赖）
+void taskStore
 
 export default observer(Profile)
