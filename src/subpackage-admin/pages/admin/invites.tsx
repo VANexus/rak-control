@@ -69,7 +69,7 @@ function AdminInvites() {
     !i.revokedAt && (!i.expiresAt || new Date(i.expiresAt).getTime() > Date.now()) && i.usedCount < i.maxUses
 
   return (
-    <PageShell title='邀请码' showBack requireRole='manage'>
+    <PageShell kicker='INVITES' headTitle='邀请码' showBack requireRole='manage'>
       <View className='stack-gap fade-in'>
         <View className={`btn-primary pressable ${busy ? 'btn-primary--disabled' : ''}`} onClick={busy ? undefined : create}>
           <Text>生成新邀请码（30 天 · 10 次）</Text>

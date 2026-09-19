@@ -5,7 +5,7 @@ import { useState } from 'react'
 import PageShell from '@/components/page-shell'
 import { Card } from '@/components/ui'
 import { ListState } from '@/components/states'
-import { authStore, teamStore } from '@/store'
+import { teamStore } from '@/store'
 import * as clubService from '@/services/club'
 import { toast } from '@/utils/toast'
 import { ApiError } from '@/utils/request'
@@ -71,7 +71,7 @@ function AdminAnnouncements() {
   }
 
   return (
-    <PageShell title='公告管理' showBack requireRole='manage'>
+    <PageShell kicker='ANNOUNCEMENT' headTitle='公告管理' showBack requireRole='manage'>
       <View className='stack-gap fade-in'>
         <Card>
           <View className='admin-form'>

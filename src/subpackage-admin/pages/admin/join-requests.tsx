@@ -3,7 +3,7 @@ import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card } from '@/components/ui'
+import { Card, StatusPill } from '@/components/ui'
 import { ListState } from '@/components/states'
 import { teamStore } from '@/store'
 import { formatDateTime } from '@/utils/format'
@@ -30,10 +30,13 @@ function AdminJoinRequests() {
 
   return (
     <PageShell
-      title='申请审批'
+      kicker='REQUESTS'
+      headTitle='申请审批'
       showBack
       requireRole='manage'
-      subtitle={`待处理 ${teamStore.joinRequests.length}`}
+      headStatus={
+        <StatusPill dot={teamStore.joinRequests.length > 0} text={`待处理 ${teamStore.joinRequests.length}`} />
+      }
     >
       <ListState
         loading={loading && teamStore.joinRequests.length === 0}

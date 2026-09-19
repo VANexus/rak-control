@@ -32,7 +32,7 @@ function Review() {
   })
 
   return (
-    <PageShell title='任务验收' showBack requireRole='manage'>
+    <PageShell kicker='REVIEW' headTitle='任务验收' showBack requireRole='manage'>
       {loading ? (
         <Skeleton rows={3} />
       ) : list.length === 0 ? (

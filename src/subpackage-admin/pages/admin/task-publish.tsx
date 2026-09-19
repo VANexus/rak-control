@@ -3,7 +3,7 @@ import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { authStore, taskStore } from '@/store'
+import { taskStore } from '@/store'
 import { REPO_OPTIONS, ROUTES } from '@/constants'
 import { TASK_CATEGORY_LABEL, type TaskCategory } from '@/types/domain'
 import { ApiError } from '@/utils/request'
@@ -44,7 +44,7 @@ function TaskPublish() {
   }
 
   return (
-    <PageShell title='发布任务' showBack requireRole='manage'>
+    <PageShell kicker='PUBLISH TASK' headTitle='发布任务' showBack requireRole='manage'>
       <View className='surface-card fade-in'>
         <View className='admin-form'>
           <View className='admin-field'>
@@ -94,10 +94,10 @@ function TaskPublish() {
             <Picker
               mode='selector'
               range={['（不关联）', ...REPO_OPTIONS]}
-              value={repo ? REPO_OPTIONS.indexOf(repo) + 1 : 0}
+              value={repo ? (REPO_OPTIONS as readonly string[]).indexOf(repo) + 1 : 0}
               onChange={(e) => {
                 const idx = Number(e.detail.value)
-                setRepo(idx === 0 ? '' : REPO_OPTIONS[idx - 1])
+                setRepo(idx === 0 ? '' : (REPO_OPTIONS[idx - 1] as typeof repo))
               }}
             >
               <View className='admin-input row-between'>

@@ -64,9 +64,8 @@ function TaskDetail() {
   }
 
   const onSubmit = async () => {
-    const r = await Taro.showModal({
+    const r = await showModalEditable({
       title: '提交任务',
-      editable: true,
       placeholderText: '交付说明（做了什么、产出在哪）',
     })
     if (r.confirm) {
@@ -85,18 +84,16 @@ function TaskDetail() {
     }).catch(() => null)
     if (!pick) return
     const grade = (['A', 'B', 'C', 'D'] as QualityGrade[])[pick.tapIndex]
-    const r = await Taro.showModal({
+    const r = await showModalEditable({
       title: `验收通过 · ${grade}`,
-      editable: true,
       placeholderText: '评语（可选）',
     })
     if (r.confirm) await runAction(taskStore.approve(task.id, grade, (r.content || '').trim()))
   }
 
   const onReject = async () => {
-    const r = await Taro.showModal({
+    const r = await showModalEditable({
       title: '驳回任务',
-      editable: true,
       placeholderText: '驳回理由（必填，指出问题与期望）',
     })
     if (!r.confirm) return
@@ -239,6 +236,17 @@ function Timeline({ name, time, danger }: { name: string; time: string; danger?:
       </View>
     </View>
   )
+}
+
+/** 微信 showModal 的 editable/content 是运行时能力，Taro 类型未覆盖，此处收口一次 */
+function showModalEditable(opts: {
+  title: string
+  placeholderText?: string
+}): Promise<{ confirm: boolean; content?: string }> {
+  return Taro.showModal({
+    ...opts,
+    editable: true,
+  } as Taro.showModal.Option) as unknown as Promise<{ confirm: boolean; content?: string }>
 }
 
 export default observer(TaskDetail)

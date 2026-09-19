@@ -100,7 +100,7 @@ function RoiEdit() {
 
   if (loading) {
     return (
-      <PageShell title='录入 ROI' showBack requireRole='manage'>
+      <PageShell kicker='ROI ENTRY' headTitle='录入 ROI' showBack requireRole='manage'>
         <Skeleton rows={2} />
       </PageShell>
     )
@@ -108,7 +108,8 @@ function RoiEdit() {
 
   return (
     <PageShell
-      title={mode === 'edit' ? '编辑 ROI 项目' : '录入 ROI 项目'}
+      kicker='ROI ENTRY'
+      headTitle={mode === 'edit' ? '编辑 ROI 项目' : '录入 ROI 项目'}
       showBack
       requireRole='manage'
     >

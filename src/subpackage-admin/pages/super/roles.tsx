@@ -3,7 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, RoleBadge } from '@/components/ui'
+import { Card, RoleBadge, StatusPill } from '@/components/ui'
 import { Skeleton, EmptyView } from '@/components/states'
 import { authStore, teamStore } from '@/store'
 import { toast } from '@/utils/toast'
@@ -38,7 +38,7 @@ function SuperRoles() {
 
   if (loading) {
     return (
-      <PageShell title='角色任免' showBack requireRole='super'>
+      <PageShell kicker='ACCESS' headTitle='角色任免' showBack requireRole='super'>
         <Skeleton rows={4} />
       </PageShell>
     )
@@ -49,7 +49,13 @@ function SuperRoles() {
   )
 
   return (
-    <PageShell title='角色任免' showBack requireRole='super' subtitle='仅超级管理员'>
+    <PageShell
+      kicker='ACCESS'
+      headTitle='角色任免'
+      showBack
+      requireRole='super'
+      headStatus={<StatusPill text='仅超级管理员' />}
+    >
       {roster.length === 0 ? (
         <EmptyView title='没有可任免的成员' hint='超级管理员自身不出现在任免名单' />
       ) : (

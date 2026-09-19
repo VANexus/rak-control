@@ -1,5 +1,4 @@
 import { View, Text, Input, Textarea, Switch } from '@tarojs/components'
-import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import PageShell from '@/components/page-shell'
@@ -59,14 +58,14 @@ function ClubSettings() {
 
   if (!club) {
     return (
-      <PageShell title='团队设置' showBack requireRole='manage'>
+      <PageShell kicker='CLUB SETTINGS' headTitle='团队设置' showBack requireRole='manage'>
         <Skeleton rows={2} />
       </PageShell>
     )
   }
 
   return (
-    <PageShell title='团队设置' showBack requireRole='manage'>
+    <PageShell kicker='CLUB SETTINGS' headTitle='团队设置' showBack requireRole='manage'>
       <Card className='fade-in'>
         <View className='admin-form'>
           <View className='admin-field'>

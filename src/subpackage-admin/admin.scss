@@ -23,10 +23,10 @@
 }
 
 .admin-input {
-  height: var(--height-control);
-  line-height: var(--height-control);
+  height: 96rpx;
+  line-height: 96rpx;
   background: var(--color-surface-2);
-  border: var(--hairline) solid var(--color-input);
+  border: var(--hairline) solid transparent;
   border-radius: var(--radius-md);
   padding: 0 24rpx;
   font-size: 28rpx;
@@ -38,7 +38,7 @@
   width: 100%;
   min-height: 200rpx;
   background: var(--color-surface-2);
-  border: var(--hairline) solid var(--color-input);
+  border: var(--hairline) solid transparent;
   border-radius: var(--radius-md);
   padding: 20rpx 24rpx;
   font-size: 28rpx;

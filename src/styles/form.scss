@@ -1,10 +1,10 @@
 /* shared form fields — tokens only */
 
 .form__input {
-  height: 88rpx;
+  height: 96rpx;
   padding: 0 24rpx;
   background: var(--color-muted);
-  border: var(--hairline) solid var(--color-input);
+  border: var(--hairline) solid transparent;
   border-radius: var(--radius-md);
   color: var(--color-foreground);
   font-size: 28rpx;
@@ -16,7 +16,7 @@
   min-height: 160rpx;
   padding: 20rpx 24rpx;
   background: var(--color-muted);
-  border: var(--hairline) solid var(--color-input);
+  border: var(--hairline) solid transparent;
   border-radius: var(--radius-md);
   color: var(--color-foreground);
   font-size: 28rpx;

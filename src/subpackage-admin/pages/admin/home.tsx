@@ -1,14 +1,13 @@
-import { View, Text } from '@tarojs/components'
+import { View } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card } from '@/components/ui'
+import { StatusPill, Tile, TileGrid } from '@/components/ui'
 import { authStore, teamStore } from '@/store'
 import * as taskService from '@/services/task'
 import * as memberService from '@/services/member'
 import { ROUTES } from '@/constants'
-import { roleLabel } from '@/utils/permission'
 import '../../admin.scss'
 
 function AdminHome() {
@@ -29,83 +28,93 @@ function AdminHome() {
     })()
   })
 
-  const Entry = ({
-    title,
-    hint,
-    url,
-    badge,
-  }: {
-    title: string
-    hint: string
-    url: string
-    badge?: number
-  }) => (
-    <View
-      className='list-row list-row--pressable'
-      onClick={() => Taro.navigateTo({ url })}
-    >
-      <View className='flex-1'>
-        <Text className='text-card-title'>{title}</Text>
-        <Text className='text-caption'>{hint}</Text>
-      </View>
-      {badge ? (
-        <View className='home-badge-dot'>
-          <Text>{badge}</Text>
-        </View>
-      ) : (
-        <Text className='text-caption'>›</Text>
-      )}
-    </View>
-  )
+  const go = (url: string) => Taro.navigateTo({ url })
 
   return (
     <PageShell
-      title='管理面板'
+      kicker='CONSOLE'
+      headTitle='管理台'
       showBack
       requireRole='manage'
-      subtitle={roleLabel(authStore.clubRole)}
+      headStatus={
+        counts.review > 0 ? <StatusPill dot text={`${counts.review} 个待验收`} /> : undefined
+      }
     >
       <View className='stack-gap fade-in'>
-        <Card className='stack-gap'>
-          <Text className='section-label'>任务</Text>
-          <Entry title='发布任务' hint='写入任务池 · OPEN' url={ROUTES.adminTaskPublish} />
-          <Entry
+        <TileGrid>
+          <Tile
+            face='solid'
+            mark='arrow'
+            title='发布任务'
+            desc='写入任务池 · OPEN'
+            onClick={() => go(ROUTES.adminTaskPublish)}
+          />
+          <Tile
+            face='solid'
+            mark={counts.review > 0 ? 'check' : 'arrow'}
             title='任务验收'
-            hint={counts.review > 0 ? `${counts.review} 个待验收` : '暂无待验收'}
-            url={ROUTES.adminReview}
-            badge={counts.review}
+            desc={counts.review > 0 ? `${counts.review} 个待验收` : '暂无待验收'}
+            onClick={() => go(ROUTES.adminReview)}
           />
-        </Card>
-
-        <Card className='stack-gap'>
-          <Text className='section-label'>ROI 财务</Text>
-          <Entry
-            title='录入 / 编辑项目'
-            hint='项目与活动收支 · ROI 自动计算'
-            url={`${ROUTES.adminRoiEdit}?mode=create`}
+          <Tile
+            face='white'
+            mark='arrow'
+            title='录入 ROI'
+            desc='收支项目 · 自动算 ROI'
+            onClick={() => go(`${ROUTES.adminRoiEdit}?mode=create`)}
           />
-          <Entry title='看板' hint='切到 ROI Tab 查看概览' url={ROUTES.roiList} />
-        </Card>
-
-        <Card className='stack-gap'>
-          <Text className='section-label'>团队运营</Text>
-          <Entry title='申请审批' hint={counts.join > 0 ? `${counts.join} 条待处理` : '暂无待处理'} url={ROUTES.adminJoinRequests} badge={counts.join} />
-          <Entry title='邀请码' hint='生成 / 小程序码 / 作废' url={ROUTES.adminInvites} />
-          <Entry title='公告' hint='发布 / 置顶 / 归档' url={ROUTES.adminAnnouncements} />
-          <Entry title='成员管理' hint='状态变更 · 名册' url={ROUTES.adminMembers} />
-          <Entry title='团队设置' hint='名称 / 简介 / 目录开关' url={ROUTES.adminClubSettings} />
-        </Card>
-
-        {authStore.isSuper ? (
-          <Card className='stack-gap'>
-            <Text className='section-label text-brand'>超级后台（仅超级管理员）</Text>
-            <Entry
+          <Tile
+            face='white'
+            mark='arrow'
+            title='项目明细'
+            desc='看板与台账'
+            onClick={() => go(ROUTES.roiList)}
+          />
+          <Tile
+            face='white'
+            mark='arrow'
+            title='邀请码'
+            desc='生成 / 小程序码 / 作废'
+            onClick={() => go(ROUTES.adminInvites)}
+          />
+          <Tile
+            face='white'
+            mark='arrow'
+            title='公告'
+            desc='发布 / 置顶 / 归档'
+            onClick={() => go(ROUTES.adminAnnouncements)}
+          />
+          <Tile
+            face='white'
+            mark='arrow'
+            title='成员管理'
+            desc='状态变更 · 名册'
+            onClick={() => go(ROUTES.adminMembers)}
+          />
+          <Tile
+            face='white'
+            mark={counts.join > 0 ? 'check' : 'arrow'}
+            title='申请审批'
+            desc={counts.join > 0 ? `${counts.join} 条待处理` : '暂无待处理'}
+            onClick={() => go(ROUTES.adminJoinRequests)}
+          />
+          <Tile
+            face='paper'
+            mark='arrow'
+            title='团队设置'
+            desc='名称 / 简介 / 目录开关'
+            onClick={() => go(ROUTES.adminClubSettings)}
+          />
+          {authStore.isSuper ? (
+            <Tile
+              face='paper'
+              mark='arrow'
               title='角色任免'
-              hint='manager / member 任免'
-              url={ROUTES.superRoles}
+              desc='超级后台 · manager/member'
+              onClick={() => go(ROUTES.superRoles)}
             />
-          </Card>
-        ) : null}
+          ) : null}
+        </TileGrid>
       </View>
     </PageShell>
   )

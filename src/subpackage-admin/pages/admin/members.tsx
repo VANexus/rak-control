@@ -3,7 +3,7 @@ import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import PageShell from '@/components/page-shell'
-import { Card, RoleBadge } from '@/components/ui'
+import { Card, RoleBadge, StatusPill } from '@/components/ui'
 import { Skeleton } from '@/components/states'
 import { authStore, teamStore } from '@/store'
 import { formatDate } from '@/utils/format'
@@ -36,14 +36,22 @@ function AdminMembers() {
 
   if (loading) {
     return (
-      <PageShell title='成员管理' showBack requireRole='manage'>
+      <PageShell kicker='ROSTER' headTitle='成员管理' showBack requireRole='manage'>
         <Skeleton rows={4} />
       </PageShell>
     )
   }
 
   return (
-    <PageShell title='成员管理' showBack requireRole='manage' subtitle={`在册 ${teamStore.members.filter((m) => m.status === 'ACTIVE').length}`}>
+    <PageShell
+      kicker='ROSTER'
+      headTitle='成员管理'
+      showBack
+      requireRole='manage'
+      headStatus={
+        <StatusPill text={`在册 ${teamStore.members.filter((m) => m.status === 'ACTIVE').length} 人`} />
+      }
+    >
       <Card className='fade-in'>
         {teamStore.members.map((m) => {
           const name = m.displayName || '成员'
