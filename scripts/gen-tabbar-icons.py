@@ -10,7 +10,8 @@ def icon(name, draw_fn, selected=False):
     size = 81
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    color = (94, 106, 210, 255) if selected else (115, 115, 115, 255)
+    # active = 墨紫 #4752A8，inactive = 冷灰 #6B6B76（tokens.scss 同步）
+    color = (71, 82, 168, 255) if selected else (107, 107, 118, 255)
     draw_fn(d, size, color)
     suffix = "-active" if selected else ""
     img.save(out / f"{name}{suffix}.png")

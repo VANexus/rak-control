@@ -42,16 +42,16 @@ export default defineAppConfig({
   },
   window: {
     backgroundTextStyle: 'dark',
-    navigationBarBackgroundColor: '#ffffff',
+    navigationBarBackgroundColor: '#F4F3EE',
     navigationBarTitleText: 'Rak',
     navigationBarTextStyle: 'black',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F4F3EE',
   },
   tabBar: {
     custom: false,
-    color: '#737373',
-    selectedColor: '#5E6AD2',
-    backgroundColor: '#ffffff',
+    color: '#6B6B76',
+    selectedColor: '#4752A8',
+    backgroundColor: '#FFFFFF',
     borderStyle: 'white',
     list: [
       {
